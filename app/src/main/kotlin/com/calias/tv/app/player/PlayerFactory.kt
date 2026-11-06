@@ -14,14 +14,8 @@ import androidx.media3.exoplayer.util.EventLogger
  * The single place where the ExoPlayer is configured. The screen only asks for a player.
  *
  * Uses Media3 classes marked @UnstableApi. Media3 is pinned (see libs.versions.toml), so they cannot
- * change without a version bump. The opt-in is limited to this function on purpose.
- *
- * Options that exist but are NOT enabled yet, because no stream has needed them (Media3 docs,
- * troubleshooting page): MPEG-TS extractor flags FLAG_DETECT_ACCESS_UNITS and
- * FLAG_ALLOW_NON_IDR_KEYFRAMES (for TS streams that look stuck buffering; extra CPU, possible brief
- * visual corruption at start), decoder fallback (DefaultRenderersFactory.setEnableDecoderFallback),
- * custom buffering (LoadControl), custom retry policy (LoadErrorHandlingPolicy).
- * Add one only when a real stream shows the problem it solves.
+ * change without a version bump. The opt-in is limited to the player files on purpose.
+ * Options not enabled yet, and why: Notes/MyTV/ideation/future-player-features.md.
  */
 @OptIn(UnstableApi::class)
 fun buildPlayer(context: Context): ExoPlayer {

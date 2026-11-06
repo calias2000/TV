@@ -41,7 +41,13 @@ internal fun PlaySource.channels(playlist: Playlist): List<Channel> = when (this
  * BACK pops it. Home is the bottom of the stack and cannot be popped.
  */
 @Composable
-fun AppNav(state: PlaylistState, onSync: () -> Unit, dark: Boolean, onToggleTheme: () -> Unit) {
+fun AppNav(
+    state: PlaylistState,
+    onSync: () -> Unit,
+    dark: Boolean,
+    onToggleTheme: () -> Unit,
+    prefs: PrefsViewModel,
+) {
     val backStack = remember { mutableStateListOf<Any>(Home) }
     val open: (Any) -> Unit = { backStack.add(it) }
     val back: () -> Unit = { backStack.removeLastOrNull() }
@@ -89,7 +95,14 @@ fun AppNav(state: PlaylistState, onSync: () -> Unit, dark: Boolean, onToggleThem
                 val list = playlist?.let { key.source.channels(it) }.orEmpty()
                 val index = list.indexOfFirst { it.id == key.channelId }
                 if (index >= 0) {
-                    PlayerScreen(channels = list, initialIndex = index, onExit = back)
+                    PlayerScreen(
+                        channels = list,
+                        initialIndex = index,
+                        isLive = key.source is PlaySource.LiveCategory,
+                        startPosition = prefs::startPosition,
+                        onProgress = prefs::saveProgress,
+                        onExit = back,
+                    )
                 }
             }
         },

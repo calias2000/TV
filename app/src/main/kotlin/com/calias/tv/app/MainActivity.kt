@@ -5,9 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -22,8 +19,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            // Dark or light, switched from Home. Survives screen changes; resets on a full app restart.
-            var dark by rememberSaveable { mutableStateOf(true) }
+            val prefs: PrefsViewModel = viewModel()
+            // Dark or light, switched from Home and remembered between runs.
+            val dark by prefs.dark.collectAsStateWithLifecycle()
             MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) {
                 // One root surface gives every screen the same background and readable text color.
                 Surface(modifier = Modifier.fillMaxSize(), shape = RectangleShape) {
@@ -33,7 +31,8 @@ class MainActivity : ComponentActivity() {
                         state = state,
                         onSync = viewModel::sync,
                         dark = dark,
-                        onToggleTheme = { dark = !dark },
+                        onToggleTheme = prefs::toggleDark,
+                        prefs = prefs,
                     )
                 }
             }

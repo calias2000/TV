@@ -45,11 +45,13 @@ dependencies {
     implementation(libs.tv.material)
 
     implementation(libs.media3.exoplayer)
-    implementation(libs.media3.ui)
+    implementation(libs.media3.ui.compose)
 
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.runtime.compose)
 
     implementation(libs.navigation3.runtime)
     implementation(libs.navigation3.ui)
+
+    implementation(libs.datastore.preferences)
 }

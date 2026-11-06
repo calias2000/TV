@@ -13,7 +13,7 @@ import kotlinx.coroutines.withContext
  */
 object PlaylistLoader {
 
-    // Your playlist endpoint. HTTPS, so Android allows it without a cleartext exception.
+    // Playlist endpoint.
     const val PLAYLIST_URL = "https://calias.me/api/iptv/live/1"
 
     private const val TIMEOUT_MS = 15_000

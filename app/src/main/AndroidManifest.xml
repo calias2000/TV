@@ -2,7 +2,6 @@
 <!-- Android app description. The leanback entries below mark this as an Android TV app. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Needed later for streams. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Declares this is a TV app. Without it the app is not offered on Android TV. -->
