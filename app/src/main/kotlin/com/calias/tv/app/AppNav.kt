@@ -41,7 +41,7 @@ internal fun PlaySource.channels(playlist: Playlist): List<Channel> = when (this
  * BACK pops it. Home is the bottom of the stack and cannot be popped.
  */
 @Composable
-fun AppNav(state: PlaylistState, onSync: () -> Unit) {
+fun AppNav(state: PlaylistState, onSync: () -> Unit, dark: Boolean, onToggleTheme: () -> Unit) {
     val backStack = remember { mutableStateListOf<Any>(Home) }
     val open: (Any) -> Unit = { backStack.add(it) }
     val back: () -> Unit = { backStack.removeLastOrNull() }
@@ -52,7 +52,13 @@ fun AppNav(state: PlaylistState, onSync: () -> Unit) {
         onBack = back,
         entryProvider = entryProvider {
             entry<Home> {
-                HomeScreen(state = state, onOpen = open, onSync = onSync)
+                HomeScreen(
+                    state = state,
+                    dark = dark,
+                    onOpen = open,
+                    onSync = onSync,
+                    onToggleTheme = onToggleTheme,
+                )
             }
             entry<LiveTv> {
                 LiveScreen(

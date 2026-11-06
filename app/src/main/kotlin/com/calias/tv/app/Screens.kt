@@ -1,6 +1,5 @@
 package com.calias.tv.app
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,12 +29,17 @@ import com.calias.tv.core.library.Category
 
 /** Home: three large tiles, plus Sync and Settings. Tiles stay dimmed until a playlist is loaded. */
 @Composable
-fun HomeScreen(state: PlaylistState, onOpen: (Any) -> Unit, onSync: () -> Unit) {
+fun HomeScreen(
+    state: PlaylistState,
+    dark: Boolean,
+    onOpen: (Any) -> Unit,
+    onSync: () -> Unit,
+    onToggleTheme: () -> Unit,
+) {
     val ready = state is PlaylistState.Loaded
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
             .padding(48.dp),
         verticalArrangement = Arrangement.spacedBy(32.dp),
     ) {
@@ -48,6 +52,7 @@ fun HomeScreen(state: PlaylistState, onOpen: (Any) -> Unit, onSync: () -> Unit) 
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Button(onClick = onSync) { Text(text = "Sync") }
             Button(onClick = { onOpen(Settings) }) { Text(text = "Settings") }
+            Button(onClick = onToggleTheme) { Text(text = if (dark) "Theme: Dark" else "Theme: Light") }
         }
         StatusLine(state)
     }
