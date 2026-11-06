@@ -42,6 +42,7 @@ import androidx.tv.material3.Button
 import androidx.tv.material3.Text
 import com.calias.tv.core.Channel
 import com.calias.tv.core.zap.Zap
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 
 /**
@@ -49,7 +50,7 @@ import kotlinx.coroutines.delay
  * then cost one connection, not one per press. The channel name still updates on every press.
  * Our own starting value, not taken from a reference app. Tune on the real TV.
  */
-private const val ZAP_DEBOUNCE_MS = 400L
+private val ZAP_DEBOUNCE = 400.milliseconds
 
 /**
  * Plays one channel full screen.
@@ -62,25 +63,26 @@ private const val ZAP_DEBOUNCE_MS = 400L
 @Composable
 fun PlayerScreen(
     channels: List<Channel>,
-    index: Int,
-    onIndexChange: (Int) -> Unit,
+    initialIndex: Int,
     onExit: () -> Unit,
 ) {
+    // The channel that is loaded. Channel keys change it; navigation does not.
+    var index by remember { mutableIntStateOf(initialIndex) }
     val channel = channels[index]
     val context = LocalContext.current
     val player = remember { buildPlayer(context) }
     var errorText by remember { mutableStateOf<String?>(null) }
 
-    // The channel the user has zapped to. It leads [index] by up to ZAP_DEBOUNCE_MS.
-    var pendingIndex by remember { mutableIntStateOf(index) }
+    // The channel the user has zapped to. It leads [index] by up to ZAP_DEBOUNCE.
+    var pendingIndex by remember { mutableIntStateOf(initialIndex) }
     // Bumped by the Retry button to start the same stream again.
     var retryToken by remember { mutableIntStateOf(0) }
 
     // Commit the zap once the user stops pressing keys.
     LaunchedEffect(pendingIndex) {
         if (pendingIndex != index) {
-            delay(ZAP_DEBOUNCE_MS)
-            onIndexChange(pendingIndex)
+            delay(ZAP_DEBOUNCE)
+            index = pendingIndex
         }
     }
 
