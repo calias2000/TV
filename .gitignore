@@ -1,0 +1,21 @@
+# Build output
+build/
+.gradle/
+.cxx/
+.externalNativeBuild/
+captures/
+*.apk
+*.aab
+
+# Local machine config (SDK path, signing) - never commit
+local.properties
+*.jks
+*.keystore
+
+# Android Studio / IDE state
+.idea/
+*.iml
+
+# Local diagnostics and OS files
+logs/
+.DS_Store

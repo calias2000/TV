@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Allows plain http for all hosts. Accepted on purpose:
+  personal TV on a controlled home network, and provider stream hosts may change.
+  Decision recorded in Notes/MyTV/decisions/08-stream-redirect-fix.md.
+-->
+<network-security-config xmlns:tools="http://schemas.android.com/tools">
+    <!-- Lint warns about cleartext by default. This is the accepted decision, so the warning is silenced here. -->
+    <base-config cleartextTrafficPermitted="true" tools:ignore="InsecureBaseConfiguration" />
+</network-security-config>
