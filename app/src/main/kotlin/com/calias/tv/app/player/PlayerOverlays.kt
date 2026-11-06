@@ -20,10 +20,17 @@ import androidx.tv.material3.Text
 // Small overlays drawn on top of the video. Fixed white-on-dark colors: they sit on video in
 // either theme.
 
-/** Live: the channel name, top-left. Shows the zapped-to channel before its stream loads. */
+/**
+ * Live: the channel name, top-left, with what is on now and next when the guide has it. Shows the
+ * zapped-to channel before its stream loads.
+ */
 @Composable
-fun LiveChannelLabel(name: String, modifier: Modifier = Modifier) {
-    Text(text = name, color = Color.White, modifier = modifier.padding(48.dp))
+fun LiveChannelLabel(name: String, now: String?, next: String?, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.padding(48.dp)) {
+        Text(text = name, color = Color.White)
+        if (now != null) Text(text = now, color = Color.White)
+        if (next != null) Text(text = "Next: $next", color = Color.White.copy(alpha = 0.7f))
+    }
 }
 
 /** Shown while the player waits for data: at start, after a seek, on a slow network. */

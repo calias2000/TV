@@ -25,6 +25,7 @@ import androidx.tv.material3.Card
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.calias.tv.core.Channel
+import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.library.Category
 
 /** Home: three large tiles, plus Sync and Settings. Tiles stay dimmed until a playlist is loaded. */
@@ -91,12 +92,17 @@ private fun StatusLine(state: PlaylistState) {
 
 /** Live TV side by side: categories on the left, the channels of the selected category on the right. */
 @Composable
-fun LiveScreen(categories: List<Category>, onWatch: (category: String, channelId: String) -> Unit) {
+fun LiveScreen(
+    categories: List<Category>,
+    guide: Guide,
+    onWatch: (category: String, channelId: String) -> Unit,
+) {
     if (categories.isEmpty()) {
         Text(text = "No live channels", modifier = Modifier.padding(48.dp))
         return
     }
     var selected by remember { mutableIntStateOf(0) }
+    val nowMs = rememberNowMs()
     Row(modifier = Modifier.fillMaxSize().padding(48.dp), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
         LazyColumn(modifier = Modifier.width(360.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             itemsIndexed(categories) { index, category ->
@@ -114,7 +120,9 @@ fun LiveScreen(categories: List<Category>, onWatch: (category: String, channelId
         val current = categories[selected]
         LazyColumn(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(current.channels, key = { it.id }) { channel ->
-                ChannelRow(channel) { onWatch(current.name, channel.id) }
+                ChannelRow(channel, program = guide.nowNext(channel.tvgId, nowMs)?.now?.title) {
+                    onWatch(current.name, channel.id)
+                }
             }
         }
     }
@@ -154,9 +162,15 @@ fun SettingsScreen(state: PlaylistState, onSync: () -> Unit) {
     }
 }
 
+/** One playlist entry as a row. Entries with the same name stay separate rows. [program]: what is on now. */
 @Composable
-private fun ChannelRow(channel: Channel, onClick: () -> Unit) {
+private fun ChannelRow(channel: Channel, program: String? = null, onClick: () -> Unit) {
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Text(text = channel.name, modifier = Modifier.padding(16.dp))
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = channel.name)
+            if (program != null) {
+                Text(text = program, style = MaterialTheme.typography.bodySmall)
+            }
+        }
     }
 }

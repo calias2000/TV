@@ -6,7 +6,8 @@ import androidx.compose.runtime.remember
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.calias.tv.app.player.PlayerScreen
-import com.calias.tv.core.Channel
+import com.calias.tv.core.epg.Guide
+import com.calias.tv.core.library.Category
 import com.calias.tv.core.library.Library
 import com.calias.tv.core.playlist.Playlist
 
@@ -28,12 +29,17 @@ data object SeriesList
 data object Settings
 data class Watch(val source: PlaySource, val channelId: String)
 
-/** The channels a [PlaySource] refers to, in the order they are browsed. */
-internal fun PlaySource.channels(playlist: Playlist): List<Channel> = when (this) {
-    is PlaySource.LiveCategory ->
-        Library.liveCategories(playlist.channels).firstOrNull { it.name == name }?.channels.orEmpty()
-    PlaySource.Movies -> Library.movies(playlist.channels)
-    PlaySource.Series -> Library.series(playlist.channels)
+/** The groups the sidebar can browse for a [PlaySource]: all live categories, or one flat list. */
+internal fun PlaySource.groups(playlist: Playlist): List<Category> = when (this) {
+    is PlaySource.LiveCategory -> Library.liveCategories(playlist.channels)
+    PlaySource.Movies -> listOf(Category("Movies", Library.movies(playlist.channels)))
+    PlaySource.Series -> listOf(Category("Series", Library.series(playlist.channels)))
+}
+
+/** Which of [groups] this source started in. */
+internal fun PlaySource.groupIndex(groups: List<Category>): Int = when (this) {
+    is PlaySource.LiveCategory -> groups.indexOfFirst { it.name == name }
+    else -> 0
 }
 
 /**
@@ -43,6 +49,7 @@ internal fun PlaySource.channels(playlist: Playlist): List<Channel> = when (this
 @Composable
 fun AppNav(
     state: PlaylistState,
+    guide: Guide,
     onSync: () -> Unit,
     dark: Boolean,
     onToggleTheme: () -> Unit,
@@ -69,6 +76,7 @@ fun AppNav(
             entry<LiveTv> {
                 LiveScreen(
                     categories = playlist?.let { Library.liveCategories(it.channels) }.orEmpty(),
+                    guide = guide,
                     onWatch = { category, channelId ->
                         open(Watch(PlaySource.LiveCategory(category), channelId))
                     },
@@ -77,14 +85,14 @@ fun AppNav(
             entry<MovieList> {
                 ChannelListScreen(
                     title = "Movies",
-                    channels = playlist?.let { PlaySource.Movies.channels(it) }.orEmpty(),
+                    channels = playlist?.let { Library.movies(it.channels) }.orEmpty(),
                     onWatch = { open(Watch(PlaySource.Movies, it)) },
                 )
             }
             entry<SeriesList> {
                 ChannelListScreen(
                     title = "Series",
-                    channels = playlist?.let { PlaySource.Series.channels(it) }.orEmpty(),
+                    channels = playlist?.let { Library.series(it.channels) }.orEmpty(),
                     onWatch = { open(Watch(PlaySource.Series, it)) },
                 )
             }
@@ -92,13 +100,16 @@ fun AppNav(
                 SettingsScreen(state = state, onSync = onSync)
             }
             entry<Watch> { key ->
-                val list = playlist?.let { key.source.channels(it) }.orEmpty()
-                val index = list.indexOfFirst { it.id == key.channelId }
+                val groups = playlist?.let { key.source.groups(it) }.orEmpty()
+                val group = key.source.groupIndex(groups)
+                val index = groups.getOrNull(group)?.channels?.indexOfFirst { it.id == key.channelId } ?: -1
                 if (index >= 0) {
                     PlayerScreen(
-                        channels = list,
+                        groups = groups,
+                        initialGroup = group,
                         initialIndex = index,
                         isLive = key.source is PlaySource.LiveCategory,
+                        guide = guide,
                         startPosition = prefs::startPosition,
                         onProgress = prefs::saveProgress,
                         onExit = back,

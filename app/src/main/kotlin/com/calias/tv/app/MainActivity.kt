@@ -27,8 +27,10 @@ class MainActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize(), shape = RectangleShape) {
                     val viewModel: PlaylistViewModel = viewModel()
                     val state by viewModel.state.collectAsStateWithLifecycle()
+                    val guide by viewModel.guide.collectAsStateWithLifecycle()
                     AppNav(
                         state = state,
+                        guide = guide,
                         onSync = viewModel::sync,
                         dark = dark,
                         onToggleTheme = prefs::toggleDark,

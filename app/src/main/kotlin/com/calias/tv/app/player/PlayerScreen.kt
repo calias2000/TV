@@ -29,7 +29,10 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.ContentFrame
 import androidx.media3.ui.compose.state.rememberErrorState
 import androidx.media3.ui.compose.state.rememberProgressStateWithTickInterval
+import com.calias.tv.app.rememberNowMs
 import com.calias.tv.core.Channel
+import com.calias.tv.core.epg.Guide
+import com.calias.tv.core.library.Category
 import com.calias.tv.core.seek.Seek
 
 /**
@@ -39,30 +42,36 @@ import com.calias.tv.core.seek.Seek
  * - Media3's Compose UI module ([ContentFrame] for the video, state holders for playback state,
  *   error and progress): the 2026 official way, instead of wrapping the old PlayerView.
  * - [ZapState]: which channel is shown and loaded, with the zap debounce.
+ * - [SidebarState] and [ChannelSidebar]: the transparent browse overlay.
  * - [VodControlsState]: when the progress bar and the skip flash show.
  * - [playerKeys]: the remote-control keys.
  * - [VodOverlay], [LiveChannelLabel], [BufferingPill], [ErrorPanel]: what is drawn on the video.
  *
- * Live ([isLive]): channel keys and D-pad up/down zap. Movies and episodes: OK pauses, left/right
- * seek, up/down show the controls, channel keys step to the previous or next item.
+ * Live ([isLive]): channel keys and D-pad up/down zap, LEFT opens the sidebar. Movies and episodes:
+ * OK pauses, left/right seek, up shows the controls, DOWN opens the sidebar, channel keys step to the
+ * previous or next item. [groups] are what the sidebar browses (live categories, or one flat list).
  *
  * [startPosition] says where to start an item (resume), [onProgress] reports where the user is.
  */
 @OptIn(UnstableApi::class)
 @Composable
 fun PlayerScreen(
-    channels: List<Channel>,
+    groups: List<Category>,
+    initialGroup: Int,
     initialIndex: Int,
     isLive: Boolean,
+    guide: Guide,
     startPosition: suspend (Channel) -> Long,
     onProgress: (Channel, positionMs: Long, durationMs: Long) -> Unit,
     onExit: () -> Unit,
 ) {
     val context = LocalContext.current
     val player = remember { buildPlayer(context) }
-    val zap = rememberZapState(channels.size, initialIndex)
+    val zap = rememberZapState(groups, initialGroup, initialIndex)
     val controls = rememberVodControlsState()
-    val channel = channels[zap.loaded]
+    val sidebar = remember { SidebarState() }
+    val nowMs = rememberNowMs()
+    val channel = zap.channels[zap.loaded]
 
     // State holders: they listen to the player and expose Compose state.
     val flags = rememberPlaybackFlags(player)
@@ -104,11 +113,16 @@ fun PlayerScreen(
         player.pause()
     }
     BackHandler(onBack = onExit)
+    // Declared after the exit handler, so it wins while the sidebar is open: BACK closes it first.
+    BackHandler(enabled = sidebar.visible, onBack = sidebar::close)
 
-    // Key presses go to whichever composable has focus. While an error shows, focus is on the
-    // Retry button (ErrorPanel asks for it); otherwise it stays on the screen itself.
+    // Key presses go to whichever composable has focus. While an error shows, focus is on the Retry
+    // button (ErrorPanel asks for it); while the sidebar is open, on its rows (it asks for it);
+    // otherwise it stays on the screen itself.
     val screenFocus = remember { FocusRequester() }
-    LaunchedEffect(error == null) { if (error == null) screenFocus.requestFocus() }
+    LaunchedEffect(error == null, sidebar.visible) {
+        if (error == null && !sidebar.visible) screenFocus.requestFocus()
+    }
 
     Box(
         modifier = Modifier
@@ -119,6 +133,7 @@ fun PlayerScreen(
             .playerKeys(
                 isLive = isLive,
                 controlsEnabled = error == null,
+                sidebarOpen = sidebar.visible,
                 onZap = zap::zap,
                 onTogglePlay = {
                     if (player.playWhenReady) player.pause() else player.play()
@@ -130,16 +145,27 @@ fun PlayerScreen(
                     controls.flashSkip((if (forward) "+" else "-") + (step / 1000) + " s", forward)
                 },
                 onShowControls = controls::showOverlay,
+                onOpenSidebar = { sidebar.open(zap.group) },
             ),
     ) {
         ContentFrame(player = player, modifier = Modifier.fillMaxSize())
 
         if (isLive) {
-            LiveChannelLabel(channels[zap.pending].name, Modifier.align(Alignment.TopStart))
+            // The sidebar covers the same corner, so the label waits until it closes.
+            if (!sidebar.visible) {
+                val shown = zap.channels[zap.pending]
+                val nowNext = guide.nowNext(shown.tvgId, nowMs)
+                LiveChannelLabel(
+                    name = shown.name,
+                    now = nowNext?.now?.title,
+                    next = nowNext?.next?.title,
+                    modifier = Modifier.align(Alignment.TopStart),
+                )
+            }
         } else {
             VodOverlay(
                 visible = controls.overlayShown || paused,
-                title = channels[zap.pending].name,
+                title = zap.channels[zap.pending].name,
                 positionMs = { progress.currentPositionMs },
                 durationMs = { progress.durationMs },
                 paused = paused,
@@ -153,6 +179,21 @@ fun PlayerScreen(
                     .padding(96.dp),
             )
         }
+
+        ChannelSidebar(
+            state = sidebar,
+            groups = groups,
+            playingGroup = zap.group,
+            playingIndex = zap.pending,
+            guide = guide,
+            nowMs = nowMs,
+            onPick = { group, index ->
+                saveProgress()
+                zap.select(group, index)
+                sidebar.close()
+            },
+            modifier = Modifier.align(Alignment.CenterStart),
+        )
 
         if (flags.buffering && error == null) BufferingPill(Modifier.align(Alignment.Center))
         error?.let { ErrorPanel(it.errorCodeName, onRetry = { retryToken++ }, modifier = Modifier.align(Alignment.Center)) }
