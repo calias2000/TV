@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key as composeKey
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -38,6 +39,8 @@ import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import com.calias.tv.app.ChannelLogo
+import com.calias.tv.core.Channel
 import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.library.Category
 
@@ -115,6 +118,7 @@ fun ChannelSidebar(
                             subtitle = guide.nowNext(channel.tvgId, nowMs)?.now?.title,
                             playing = state.group == playingGroup && index == playingIndex,
                             modifier = focus,
+                            logoOf = channel,
                             onClick = { onPick(state.group, index) },
                         )
                     }
@@ -157,6 +161,7 @@ private fun SidebarRow(
     subtitle: String?,
     playing: Boolean,
     modifier: Modifier,
+    logoOf: Channel? = null,
     onClick: () -> Unit,
 ) {
     Surface(
@@ -173,9 +178,14 @@ private fun SidebarRow(
             pressedContentColor = Color.White,
         ),
     ) {
-        Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             // Fixed-width marker column, so titles and subtitles line up on every row.
-            Text(text = if (playing) "▶" else "", modifier = Modifier.width(28.dp))
+            Text(text = if (playing) "▶" else "", modifier = Modifier.width(24.dp))
+            if (logoOf != null) ChannelLogo(logoOf)
             Column {
                 Text(text = title)
                 if (subtitle != null) Text(text = subtitle, style = MaterialTheme.typography.bodySmall)

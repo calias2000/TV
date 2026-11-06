@@ -54,4 +54,7 @@ dependencies {
     implementation(libs.navigation3.ui)
 
     implementation(libs.datastore.preferences)
+
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 }

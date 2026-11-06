@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.focusProperties
@@ -166,10 +167,17 @@ fun SettingsScreen(state: PlaylistState, onSync: () -> Unit) {
 @Composable
 private fun ChannelRow(channel: Channel, program: String? = null, onClick: () -> Unit) {
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = channel.name)
-            if (program != null) {
-                Text(text = program, style = MaterialTheme.typography.bodySmall)
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ChannelLogo(channel)
+            Column {
+                Text(text = channel.name)
+                if (program != null) {
+                    Text(text = program, style = MaterialTheme.typography.bodySmall)
+                }
             }
         }
     }
