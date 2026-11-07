@@ -12,7 +12,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 
-// Movie and episode controls timing. Our own starting values.
+// Timing of the info overlays (live header, movie progress bar) and the skip flash. Our own starting values.
 private val OVERLAY_HIDE_DELAY = 4.seconds
 private val SKIP_FLASH = 700.milliseconds
 
@@ -20,11 +20,12 @@ private val SKIP_FLASH = 700.milliseconds
 data class SkipFlash(val label: String, val forward: Boolean, val id: Int)
 
 /**
- * When the movie/episode controls show: the progress bar appears on any key and hides after
- * [OVERLAY_HIDE_DELAY]; the skip flash shows for [SKIP_FLASH]. A plain state holder, timers included.
+ * When the info overlays show: the live header and the movie/episode progress bar appear on start,
+ * zap, UP, pause and seek, and hide after [OVERLAY_HIDE_DELAY]; the skip flash shows for [SKIP_FLASH].
+ * A plain state holder, timers included.
  */
 @Stable
-class VodControlsState {
+class ControlsState {
     var overlayToken by mutableIntStateOf(0)
         private set
     var overlayShown by mutableStateOf(true)
@@ -58,8 +59,8 @@ class VodControlsState {
 }
 
 @Composable
-fun rememberVodControlsState(): VodControlsState {
-    val state = remember { VodControlsState() }
+fun rememberControlsState(): ControlsState {
+    val state = remember { ControlsState() }
     LaunchedEffect(state.overlayToken) { state.runOverlayTimer() }
     LaunchedEffect(state.skip) { state.runSkipTimer() }
     return state

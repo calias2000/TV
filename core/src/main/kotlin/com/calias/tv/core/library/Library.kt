@@ -3,6 +3,9 @@ package com.calias.tv.core.library
 import com.calias.tv.core.Channel
 import com.calias.tv.core.ContentKind
 
+/** Where a channel sits in a list of categories: the category index and the index inside it. */
+data class Position(val group: Int, val index: Int)
+
 /** A named group of live channels, such as "NOTICIAS" or "DAZN". */
 data class Category(val name: String, val channels: List<Channel>)
 
@@ -28,4 +31,14 @@ object Library {
 
     fun series(channels: List<Channel>): List<Channel> =
         channels.filter { it.kind == ContentKind.SERIES }
+
+    /** Where the channel with [streamUrl] is in [categories], or null if it is not there (or the url is null). */
+    fun locate(categories: List<Category>, streamUrl: String?): Position? {
+        if (streamUrl == null) return null
+        categories.forEachIndexed { group, category ->
+            val index = category.channels.indexOfFirst { it.streamUrl == streamUrl }
+            if (index >= 0) return Position(group, index)
+        }
+        return null
+    }
 }

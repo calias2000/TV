@@ -21,6 +21,11 @@ android {
         compose = true
     }
 
+    lint {
+        // The TV banner is one 320x180 image in drawable-xhdpi on purpose: TV screens are xhdpi.
+        disable += "IconMissingDensityFolder"
+    }
+
     buildTypes {
         release {
             // App optimization (AGP 9.3+ DSL, per official docs): R8 removes unused code AND unused

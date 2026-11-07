@@ -5,6 +5,7 @@ import com.calias.tv.core.ContentKind
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class ResumeTest {
 
@@ -45,9 +46,24 @@ class ResumeTest {
     }
 
     @Test
+    fun `continue watching lists newest first, only titles still in the playlist, never live`() {
+        val old = ch("Old Movie", ContentKind.MOVIE)
+        val new = ch("New - S01E02 - X", ContentKind.SERIES)
+        val records = mapOf(
+            "movie:Old Movie" to ResumeRecord("Old Movie", 60_000, 1),
+            "series:New" to ResumeRecord("New - S01E02 - X", 90_000, 2),
+            "movie:Gone" to ResumeRecord("Gone", 60_000, 3),
+        )
+        val items = Resume.continueWatching(records, listOf(old, new, ch("Old Movie", ContentKind.LIVE)))
+        assertEquals(listOf(new, old), items.map { it.channel })
+        assertEquals(90_000L, items.first().positionMs)
+        assertEquals(1, Resume.continueWatching(records, listOf(old, new), limit = 1).size)
+    }
+
+    @Test
     fun `encode and decode round trip, bad lines skipped`() {
         val map = mapOf("series:A - B" to ResumeRecord("A - B - S01E01 - X", 61_000, 5))
         assertEquals(map, Resume.decode(Resume.encode(map)))
-        assertEquals(emptyMap(), Resume.decode("garbage\n\n"))
+        assertTrue(Resume.decode("garbage\n\n").isEmpty())
     }
 }

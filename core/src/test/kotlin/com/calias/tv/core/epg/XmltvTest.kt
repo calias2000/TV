@@ -52,4 +52,13 @@ class XmltvTest {
         assertNull(g.nowNext("other.pt", ms("2026-11-06T11:30:00Z")))
         assertNull(g.nowNext(null, 0))
     }
+
+    @Test
+    fun `schedule lists the running program first, then the following ones`() {
+        val g = guide()
+        assertEquals(listOf("Noticias & Mais", "Filme"), g.schedule("a.pt", ms("2026-11-06T11:30:00Z")).map { it.title })
+        assertEquals(listOf("Filme"), g.schedule("a.pt", ms("2026-11-06T12:30:00Z")).map { it.title })
+        assertEquals(emptyList(), g.schedule("a.pt", ms("2026-11-06T20:00:00Z")))
+        assertEquals(emptyList(), g.schedule(null, 0))
+    }
 }

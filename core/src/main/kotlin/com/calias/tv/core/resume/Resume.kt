@@ -6,6 +6,9 @@ import com.calias.tv.core.ContentKind
 /** Where a movie or episode was left: its title, the position, and when it was saved. */
 data class ResumeRecord(val title: String, val positionMs: Long, val savedAt: Long)
 
+/** A movie or episode the user can continue, with where they stopped. */
+data class ContinueItem(val channel: Channel, val positionMs: Long)
+
 /**
  * Remembers where the user stopped watching. One record per movie and one per series (the last
  * episode watched). Keyed by title, not by channel id, because ids are playlist positions and
@@ -52,6 +55,18 @@ object Resume {
         val updated = records + (key to ResumeRecord(title, positionMs, now))
         return updated.entries.sortedByDescending { it.value.savedAt }.take(MAX_RECORDS)
             .associate { it.key to it.value }
+    }
+
+    /**
+     * What to offer under "Continue watching": the most recently watched records, newest first,
+     * matched to the playlist by title. Records whose title is no longer in the playlist are left out.
+     */
+    fun continueWatching(records: Map<String, ResumeRecord>, channels: List<Channel>, limit: Int = 10): List<ContinueItem> {
+        val byTitle = channels.filter { it.kind != ContentKind.LIVE }.distinctBy { it.name }.associateBy { it.name }
+        return records.values
+            .sortedByDescending { it.savedAt }
+            .mapNotNull { record -> byTitle[record.title]?.let { ContinueItem(it, record.positionMs) } }
+            .take(limit)
     }
 
     /** One line per record: key, savedAt, position, title (tab separated; the title goes last). */

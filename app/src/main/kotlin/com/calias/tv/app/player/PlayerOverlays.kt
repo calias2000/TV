@@ -1,5 +1,10 @@
 package com.calias.tv.app.player
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,15 +26,17 @@ import androidx.tv.material3.Text
 // either theme.
 
 /**
- * Live: the channel name, top-left, with what is on now and next when the guide has it. Shows the
- * zapped-to channel before its stream loads.
+ * Live header, top-left: the channel name, with what is on now and next when the guide has it. Shows
+ * the zapped-to channel before its stream loads. [visible] fades it in and out.
  */
 @Composable
-fun LiveChannelLabel(name: String, now: String?, next: String?, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.padding(48.dp)) {
-        Text(text = name, color = Color.White)
-        if (now != null) Text(text = now, color = Color.White)
-        if (next != null) Text(text = "Next: $next", color = Color.White.copy(alpha = 0.7f))
+fun LiveChannelLabel(visible: Boolean, name: String, now: String?, next: String?, modifier: Modifier = Modifier) {
+    AnimatedVisibility(visible = visible, modifier = modifier, enter = fadeIn(), exit = fadeOut()) {
+        Column(modifier = Modifier.padding(48.dp)) {
+            Text(text = name, color = Color.White)
+            if (now != null) Text(text = now, color = Color.White)
+            if (next != null) Text(text = "Next: $next", color = Color.White.copy(alpha = 0.7f))
+        }
     }
 }
 
@@ -45,7 +52,10 @@ fun BufferingPill(modifier: Modifier = Modifier) {
     )
 }
 
-/** Playback failed: the error code and a Retry button that takes focus, so OK works. */
+/**
+ * Playback failed: the error code and a Retry button that takes focus, so OK works. The screen leaves
+ * this panel out while the sidebar is open, so it takes focus again each time it comes back.
+ */
 @Composable
 fun ErrorPanel(code: String, onRetry: () -> Unit, modifier: Modifier = Modifier) {
     val retryFocus = remember { FocusRequester() }
@@ -62,6 +72,30 @@ fun ErrorPanel(code: String, onRetry: () -> Unit, modifier: Modifier = Modifier)
         Button(onClick = onRetry, modifier = Modifier.focusRequester(retryFocus)) {
             Text(text = "Retry")
         }
-        Text(text = "Channel up/down or Back to leave", color = Color.White)
+        Text(text = "Down for the list, Back to leave", color = Color.White)
+    }
+}
+
+/**
+ * "Next episode" offer, bottom-right, shown near the end of an episode (like Netflix). OK plays it
+ * at once; if the episode just ends, the next one starts by itself.
+ */
+@Composable
+fun NextEpisodeCard(visible: Boolean, title: String, modifier: Modifier = Modifier) {
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = fadeIn() + slideInVertically { it / 2 },
+        exit = fadeOut() + slideOutVertically { it / 2 },
+    ) {
+        Column(
+            modifier = Modifier
+                .background(Color.Black.copy(alpha = 0.75f), RoundedCornerShape(12.dp))
+                .padding(horizontal = 28.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(text = "Next episode  ▶  press OK", color = Color.White)
+            Text(text = title, color = Color.White.copy(alpha = 0.7f))
+        }
     }
 }

@@ -2,8 +2,8 @@
 # Change a version here, never inside a module's build file.
 
 [versions]
-agp = "9.4.0"
-kotlin = "2.4.20"
+agp = "9.5.1"
+kotlin = "2.4.21"
 composeBom = "2026.09.00"
 activityCompose = "1.13.0"
 tvMaterial = "1.1.0"

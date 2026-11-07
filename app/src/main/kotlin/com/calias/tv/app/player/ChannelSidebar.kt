@@ -6,27 +6,13 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key as composeKey
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.withFrameNanos
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
@@ -35,12 +21,10 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
-import com.calias.tv.app.ChannelLogo
-import com.calias.tv.core.Channel
+import com.calias.tv.app.browse.BrowseList
+import com.calias.tv.app.browse.ChannelRow
 import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.library.Category
 
@@ -96,99 +80,33 @@ fun ChannelSidebar(
             // New list (and new initial focus) whenever the level or browsed group changes.
             composeKey(state.level, state.group) {
                 if (state.level == SidebarLevel.GROUPS) {
-                    SidebarList(count = groups.size, focusIndex = state.group) { index, focus ->
-                        val group = groups[index]
-                        SidebarRow(
-                            title = "${group.name} (${group.channels.size})",
-                            subtitle = null,
+                    BrowseList(count = groups.size, focusIndex = state.group) { index, focus ->
+                        ChannelRow(
+                            title = "${groups[index].name} (${groups[index].channels.size})",
                             playing = index == playingGroup,
+                            onVideo = true,
                             modifier = focus,
                             onClick = { state.showChannels(index) },
                         )
                     }
                 } else {
                     val channels = groups[state.group].channels
-                    SidebarList(
-                        count = channels.size,
-                        focusIndex = if (state.group == playingGroup) playingIndex else 0,
-                    ) { index, focus ->
+                    val here = state.group == playingGroup
+                    BrowseList(count = channels.size, focusIndex = if (here) playingIndex else 0) { index, focus ->
                         val channel = channels[index]
-                        SidebarRow(
+                        val now = guide.nowNext(channel.tvgId, nowMs)?.now
+                        ChannelRow(
                             title = channel.name,
-                            subtitle = guide.nowNext(channel.tvgId, nowMs)?.now?.title,
-                            playing = state.group == playingGroup && index == playingIndex,
+                            channel = channel,
+                            subtitle = now?.title,
+                            progress = now?.progress(nowMs),
+                            playing = here && index == playingIndex,
+                            onVideo = true,
                             modifier = focus,
-                            logoOf = channel,
                             onClick = { onPick(state.group, index) },
                         )
                     }
                 }
-            }
-        }
-    }
-}
-
-/** A scrolling list that starts near [focusIndex] and puts focus on that row. */
-@Composable
-private fun SidebarList(
-    count: Int,
-    focusIndex: Int,
-    row: @Composable (index: Int, focus: Modifier) -> Unit,
-) {
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = (focusIndex - 3).coerceAtLeast(0))
-    val focus = remember { FocusRequester() }
-    // The row only exists after the first frame, so wait for it before asking for focus.
-    LaunchedEffect(Unit) {
-        withFrameNanos { }
-        focus.requestFocus()
-    }
-    LazyColumn(
-        state = listState,
-        modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        items(count) { index ->
-            row(index, if (index == focusIndex) Modifier.focusRequester(focus) else Modifier)
-        }
-    }
-}
-
-/** One row. Every entry is its own row, even when names repeat. [playing] marks what is on screen. */
-@Composable
-private fun SidebarRow(
-    title: String,
-    subtitle: String?,
-    playing: Boolean,
-    modifier: Modifier,
-    logoOf: Channel? = null,
-    onClick: () -> Unit,
-) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(8.dp)),
-        scale = ClickableSurfaceDefaults.scale(focusedScale = 1f), // no zoom: keeps rows aligned
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color.Transparent,
-            contentColor = Color.White,
-            focusedContainerColor = Color.White.copy(alpha = 0.22f),
-            focusedContentColor = Color.White,
-            pressedContainerColor = Color.White.copy(alpha = 0.3f),
-            pressedContentColor = Color.White,
-        ),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // Fixed-width marker column, so titles and subtitles line up on every row.
-            Text(text = if (playing) "▶" else "", modifier = Modifier.width(24.dp))
-            if (logoOf != null) ChannelLogo(logoOf)
-            Column {
-                Text(text = title)
-                if (subtitle != null) Text(text = subtitle, style = MaterialTheme.typography.bodySmall)
             }
         }
     }

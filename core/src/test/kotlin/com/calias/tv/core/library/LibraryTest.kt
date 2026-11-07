@@ -37,4 +37,14 @@ class LibraryTest {
         assertEquals(listOf("ep1", "ep2"), Library.series(playlist).map { it.id })
         assertEquals(5, Library.liveCategories(playlist).sumOf { it.channels.size })
     }
+
+    @Test
+    fun `locate finds a channel by stream url in its category, or gives null`() {
+        val categories = Library.liveCategories(playlist)
+
+        assertEquals(Position(0, 1), Library.locate(categories, "http://x/rtp2"))
+        assertEquals(Position(1, 0), Library.locate(categories, "http://x/dazn1"))
+        assertEquals(null, Library.locate(categories, "http://x/gone"))
+        assertEquals(null, Library.locate(categories, null))
+    }
 }

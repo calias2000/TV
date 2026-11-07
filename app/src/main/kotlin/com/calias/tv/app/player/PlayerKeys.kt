@@ -10,44 +10,47 @@ import androidx.compose.ui.input.key.type
 /**
  * Remote-control keys of the player screen.
  *
- * Same convention as OwnTV: CH+ and D-pad up go to the NEXT item, CH- and D-pad down go to the
- * PREVIOUS one (see Zap.step).
- * - Live: up/down zap, LEFT opens the browse sidebar.
- * - Movies and episodes: left/right seek, up shows the controls, DOWN opens the browse sidebar.
- * - Sidebar open: it owns the D-pad and OK (they reach the focused row); channel keys still zap.
- * [controlsEnabled] is false while an error shows, so OK and the D-pad reach the Retry button.
+ * Same convention as OwnTV: CH+ goes to the NEXT item, CH- to the PREVIOUS one (see Zap.step).
+ * - UP shows the info: the header (live: channel, now, next; movies: title) and, on movies and
+ *   episodes, the progress bar.
+ * - Live: DOWN, LEFT and RIGHT open the browse sidebar. CH+/CH- zap.
+ * - Movies and episodes: DOWN opens the sidebar, LEFT/RIGHT seek. OK pauses, or plays the next
+ *   episode while the "Next episode" card is offered. CH+/CH- step to the previous/next item.
+ * - A list open ([listOpen]: the sidebar, or the Live browse screen): it owns the D-pad and OK (they
+ *   reach the focused row); channel keys still zap.
+ * - Error showing ([controlsEnabled] false): LEFT/RIGHT/OK reach the Retry button, DOWN still
+ *   opens the sidebar, so a dead channel can be left without channel keys.
  */
 fun Modifier.playerKeys(
     isLive: Boolean,
     controlsEnabled: Boolean,
-    sidebarOpen: Boolean,
+    listOpen: Boolean,
+    nextEpisodeOffered: Boolean,
     onZap: (delta: Int) -> Unit,
     onTogglePlay: () -> Unit,
     onSkip: (forward: Boolean, repeatCount: Int) -> Unit,
-    onShowControls: () -> Unit,
+    onShowInfo: () -> Unit,
     onOpenSidebar: () -> Unit,
+    onNextEpisode: () -> Unit,
 ): Modifier = onPreviewKeyEvent { event ->
     if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
     val controls = !isLive && controlsEnabled
+    val sidebarKey = isLive && controlsEnabled
     when (event.key) {
         Key.ChannelUp -> { onZap(+1); true }
         Key.ChannelDown -> { onZap(-1); true }
         Key.MediaPlayPause -> { onTogglePlay(); true }
         else -> when {
-            sidebarOpen -> false
-            event.key == Key.DirectionUp -> { if (isLive) onZap(+1) else onShowControls(); true }
-            event.key == Key.DirectionDown -> {
-                if (isLive) onZap(-1) else if (controlsEnabled) onOpenSidebar()
-                true
-            }
+            listOpen -> false
+            event.key == Key.DirectionUp -> { onShowInfo(); true }
+            event.key == Key.DirectionDown -> { onOpenSidebar(); true }
             event.key == Key.DirectionCenter || event.key == Key.Enter ->
-                if (controls) { onTogglePlay(); true } else false
-            event.key == Key.DirectionLeft -> when {
-                isLive && controlsEnabled -> { onOpenSidebar(); true }
-                controls -> { onSkip(false, event.nativeKeyEvent.repeatCount); true }
+                if (controls) { if (nextEpisodeOffered) onNextEpisode() else onTogglePlay(); true } else false
+            event.key == Key.DirectionLeft || event.key == Key.DirectionRight -> when {
+                sidebarKey -> { onOpenSidebar(); true }
+                controls -> { onSkip(event.key == Key.DirectionRight, event.nativeKeyEvent.repeatCount); true }
                 else -> false
             }
-            event.key == Key.DirectionRight -> if (controls) { onSkip(true, event.nativeKeyEvent.repeatCount); true } else false
             else -> false
         }
     }
