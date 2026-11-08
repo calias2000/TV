@@ -23,6 +23,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import com.calias.tv.app.ChannelLogo
+import com.calias.tv.app.ui.Glass
 import com.calias.tv.core.Channel
 
 /**
@@ -92,10 +93,10 @@ private fun RowContent(title: String, channel: Channel?, subtitle: String?, prog
     }
 }
 
-/** A thin bar showing [fraction] (0 to 1) of the way. Follows the content color, so it fits any row. */
+/** A thin bar showing [fraction] (0 to 1) of the way, in the theme accent. */
 @Composable
 fun ProgressBar(fraction: Float, modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(50)).background(Color.Gray.copy(alpha = 0.4f))) {
-        Box(modifier = Modifier.fillMaxWidth(fraction).height(3.dp).background(Color(0xFF4FC3F7)))
+        Box(modifier = Modifier.fillMaxWidth(fraction).height(3.dp).background(Glass.colors.accent))
     }
 }

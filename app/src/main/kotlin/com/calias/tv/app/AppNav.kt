@@ -13,14 +13,17 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.calias.tv.app.player.PlayerScreen
 import com.calias.tv.core.ContentKind
+import com.calias.tv.app.ui.AppFont
 import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.library.Category
 import com.calias.tv.core.library.Library
+import com.calias.tv.core.recents.Recents
 import com.calias.tv.core.resume.Resume
 
 // Destinations. Each object or data class is one key on the back stack.
 data object Home
-data object LiveTv
+/** Live TV. [channelUrl]: the channel to open on (else the last one played). */
+data class LiveTv(val channelUrl: String? = null)
 data object MovieList
 data object SeriesList
 data object Settings
@@ -36,8 +39,9 @@ fun AppNav(
     state: PlaylistState,
     guide: Guide,
     onSync: () -> Unit,
-    dark: Boolean,
     onToggleTheme: () -> Unit,
+    font: AppFont,
+    onFont: (AppFont) -> Unit,
     prefs: PrefsViewModel,
 ) {
     val backStack = remember { mutableStateListOf<Any>(Home) }
@@ -51,40 +55,46 @@ fun AppNav(
         onBack = back,
         entryProvider = entryProvider {
             entry<Home> {
-                val continueItems = remember(resumeRecords, playlist) {
+                val resume = remember(resumeRecords, playlist) {
                     playlist?.let { Resume.continueWatching(resumeRecords, it.channels) }.orEmpty()
+                }
+                val recentUrls by prefs.recentLive.collectAsStateWithLifecycle()
+                val recentLive = remember(recentUrls, playlist) {
+                    playlist?.let { Recents.resolve(recentUrls, it.channels) }.orEmpty()
                 }
                 HomeScreen(
                     state = state,
-                    dark = dark,
-                    continueItems = continueItems,
-                    onContinue = { item ->
-                        open(Watch(item.channel.kind, item.channel.id))
-                    },
+                    counts = playlist?.let { Library.counts(it.channels) },
+                    resume = resume,
+                    recentLive = recentLive,
+                    guide = guide,
+                    onResume = { open(Watch(it.channel.kind, it.channel.id)) },
+                    onRecentLive = { open(LiveTv(it.streamUrl)) },
                     onOpen = open,
                     onSync = onSync,
                     onToggleTheme = onToggleTheme,
                 )
             }
-            entry<LiveTv> {
+            entry<LiveTv> { key ->
                 val groups = remember(playlist) { playlist?.let { Library.liveCategories(it.channels) }.orEmpty() }
                 if (groups.isEmpty()) {
                     Text(text = "No live channels", modifier = Modifier.padding(48.dp))
                 } else {
-                    // Opens on the last live channel, playing. Without one, nothing plays until OK.
-                    // Read once when the screen opens: tuning saves a new value, which must not move the screen.
-                    val lastUrl by prefs.lastLive.collectAsStateWithLifecycle()
-                    val last = remember(groups) { Library.locate(groups, lastUrl) }
+                    // Opens on the asked channel, else the last one played, and plays it. Without one,
+                    // nothing plays until OK. Read once when the screen opens: tuning saves a new value,
+                    // which must not move the screen.
+                    val recentUrls by prefs.recentLive.collectAsStateWithLifecycle()
+                    val start = remember(groups) { Library.locate(groups, key.channelUrl ?: recentUrls.firstOrNull()) }
                     PlayerScreen(
                         groups = groups,
-                        initialGroup = last?.group ?: 0,
-                        initialIndex = last?.index ?: 0,
+                        initialGroup = start?.group ?: 0,
+                        initialIndex = start?.index ?: 0,
                         isLive = true,
-                        startPlaying = last != null,
+                        startPlaying = start != null,
                         guide = guide,
                         startPosition = prefs::startPosition,
                         onProgress = prefs::saveProgress,
-                        onTuned = prefs::saveLastLive,
+                        onTuned = prefs::saveRecentLive,
                         onExit = back,
                     )
                 }
@@ -104,7 +114,7 @@ fun AppNav(
                 )
             }
             entry<Settings> {
-                SettingsScreen(state = state, onSync = onSync)
+                SettingsScreen(state = state, onSync = onSync, font = font, onFont = onFont)
             }
             entry<Watch> { key ->
                 val isMovie = key.kind == ContentKind.MOVIE

@@ -47,4 +47,9 @@ class LibraryTest {
         assertEquals(null, Library.locate(categories, "http://x/gone"))
         assertEquals(null, Library.locate(categories, null))
     }
+
+    @Test
+    fun `counts tell how many live channels, movies and episodes there are`() {
+        assertEquals(Counts(live = 5, movies = 1, episodes = 2), Library.counts(playlist))
+    }
 }

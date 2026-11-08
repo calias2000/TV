@@ -31,7 +31,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.ContentFrame
 import androidx.media3.ui.compose.state.rememberErrorState
 import androidx.media3.ui.compose.state.rememberProgressStateWithTickInterval
-import androidx.tv.material3.MaterialTheme
 import com.calias.tv.app.browse.LiveBrowse
 import com.calias.tv.app.browse.MiniPlayerOverlay
 import com.calias.tv.app.browse.VideoFrame
@@ -168,7 +167,7 @@ fun PlayerScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(if (browsing) MaterialTheme.colorScheme.background else Color.Black)
+            .background(if (browsing) Color.Transparent else Color.Black) // browsing: the app background shows
             .focusRequester(screenFocus)
             .focusable()
             .playerKeys(

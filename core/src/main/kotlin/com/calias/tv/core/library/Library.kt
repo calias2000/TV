@@ -6,6 +6,9 @@ import com.calias.tv.core.ContentKind
 /** Where a channel sits in a list of categories: the category index and the index inside it. */
 data class Position(val group: Int, val index: Int)
 
+/** How many live channels, movies and episodes the playlist has. */
+data class Counts(val live: Int, val movies: Int, val episodes: Int)
+
 /** A named group of live channels, such as "NOTICIAS" or "DAZN". */
 data class Category(val name: String, val channels: List<Channel>)
 
@@ -41,4 +44,10 @@ object Library {
         }
         return null
     }
+
+    fun counts(channels: List<Channel>): Counts = Counts(
+        live = channels.count { it.kind == ContentKind.LIVE },
+        movies = channels.count { it.kind == ContentKind.MOVIE },
+        episodes = channels.count { it.kind == ContentKind.SERIES },
+    )
 }
