@@ -1,6 +1,7 @@
 package com.calias.tv.app.player
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,11 +32,14 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.calias.tv.app.R
+import com.calias.tv.app.ui.Edge
 import com.calias.tv.app.ui.Glass
 import com.calias.tv.app.ui.GlassButton
 import com.calias.tv.app.ui.GlassPanel
 import com.calias.tv.app.ui.ProgressBar
 import com.calias.tv.app.ui.Spinner
+import com.calias.tv.app.ui.SubtitleLine
+import com.calias.tv.app.ui.SubtitleSize
 
 // Small overlays drawn on top of the video. Fixed white-on-dark colors: they sit on video in
 // either theme.
@@ -71,6 +76,17 @@ fun PlayPauseIcon(visible: Boolean, paused: Boolean, modifier: Modifier = Modifi
             )
         }
     }
+}
+
+/**
+ * The subtitle line ([SubtitleLine]), bottom-center. It sits above the movie bar while [raised] (the bar
+ * shows). Text subtitles only (SubRip, WebVTT): a picture subtitle has no text and is not drawn.
+ */
+@Composable
+fun SubtitleText(text: String, size: SubtitleSize, raised: Boolean, modifier: Modifier = Modifier) {
+    val bottom by animateDpAsState(if (raised) 200.dp else Edge.Margin, label = "subtitle")
+    if (text.isEmpty()) return
+    SubtitleLine(text = text, size = size, modifier = modifier.padding(bottom = bottom))
 }
 
 /** What went wrong, in words for the family. The Media3 code name stays visible below it for us. */

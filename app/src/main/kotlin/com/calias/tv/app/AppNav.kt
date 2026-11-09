@@ -12,7 +12,6 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.calias.tv.app.player.PlayerScreen
 import com.calias.tv.core.ContentKind
-import com.calias.tv.app.ui.AppFont
 import com.calias.tv.app.ui.Edge
 import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.library.Category
@@ -42,8 +41,7 @@ fun AppNav(
     guide: Guide,
     onSync: () -> Unit,
     onToggleTheme: () -> Unit,
-    font: AppFont,
-    onFont: (AppFont) -> Unit,
+    look: Look,
     prefs: PrefsViewModel,
 ) {
     val backStack = remember { mutableStateListOf<Any>(Home) }
@@ -113,7 +111,14 @@ fun AppNav(
                 if (show != null) EpisodesScreen(show = show, resume = resume, onWatch = { open(Watch(ContentKind.SERIES, it)) })
             }
             entry<Settings> {
-                SettingsScreen(state = state, onSync = onSync, font = font, onFont = onFont)
+                SettingsScreen(
+                    state = state,
+                    onSync = onSync,
+                    font = look.font,
+                    onFont = prefs::setFont,
+                    subtitleSize = look.subtitleSize,
+                    onSubtitleSize = prefs::setSubtitleSize,
+                )
             }
             entry<Watch> { key ->
                 val groups = remember(playlist, key.kind) {
@@ -131,6 +136,7 @@ fun AppNav(
                         guide = guide,
                         startPosition = prefs::startPosition,
                         onProgress = prefs::saveProgress,
+                        subtitleSize = look.subtitleSize,
                         onExit = back,
                     )
                 }

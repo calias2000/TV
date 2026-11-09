@@ -108,12 +108,7 @@ fun ChannelPanel(
             GlassPanel(modifier = Modifier.width(360.dp).fillMaxHeight()) {
                 Column(modifier = Modifier.padding(horizontal = 12.dp).padding(top = 16.dp)) {
                     val title = if (state.level == PanelLevel.GROUPS) "Groups" else groups[state.group].name
-                    Text(
-                        text = title,
-                        color = Glass.overVideo.text,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 4.dp),
-                    )
+                    PanelTitle(title)
                     // New list (and new initial focus) whenever the level or browsed group changes.
                     composeKey(state.level, state.group) {
                         if (state.level == PanelLevel.GROUPS) {
@@ -159,4 +154,15 @@ fun ChannelPanel(
             }
         }
     }
+}
+
+/** The title of a glass list card over the video ("Groups", "Audio", ...). */
+@Composable
+internal fun PanelTitle(text: String) {
+    Text(
+        text = text,
+        color = Glass.overVideo.text,
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 4.dp),
+    )
 }

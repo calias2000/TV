@@ -35,8 +35,7 @@ class MainActivity : ComponentActivity() {
                         guide = guide,
                         onSync = viewModel::sync,
                         onToggleTheme = prefs::toggleDark,
-                        font = look.font,
-                        onFont = prefs::setFont,
+                        look = look,
                         prefs = prefs,
                     )
                 }

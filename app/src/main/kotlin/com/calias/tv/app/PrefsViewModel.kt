@@ -9,6 +9,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.calias.tv.app.ui.AppFont
+import com.calias.tv.app.ui.SubtitleSize
 import com.calias.tv.core.Channel
 import com.calias.tv.core.recents.Recents
 import com.calias.tv.core.resume.Resume
@@ -27,13 +28,14 @@ private val DARK = booleanPreferencesKey("dark")
 private val RESUME = stringPreferencesKey("resume")
 private val RECENT_LIVE = stringPreferencesKey("recent_live")
 private val FONT = stringPreferencesKey("font")
+private val SUBTITLE_SIZE = stringPreferencesKey("subtitle_size")
 
-/** The theme and font the app is drawn in. */
-data class Look(val dark: Boolean, val font: AppFont)
+/** The theme, font and subtitle size the app is drawn with. */
+data class Look(val dark: Boolean, val font: AppFont, val subtitleSize: SubtitleSize)
 
 /**
  * The small things the app remembers between runs: the theme, where each movie or series was
- * left, the recent live channels and the font. Screens use this ViewModel; none of them touch DataStore directly. Writes run in
+ * left, the recent live channels, the font and the subtitle size. Screens use this ViewModel; none of them touch DataStore directly. Writes run in
  * [viewModelScope], so leaving the player does not cancel a save.
  */
 class PrefsViewModel(app: Application) : AndroidViewModel(app) {
@@ -41,14 +43,15 @@ class PrefsViewModel(app: Application) : AndroidViewModel(app) {
     private val store = app.dataStore
 
     /**
-     * The theme and the font. Null until DataStore has been read, so the first frame is never drawn in
-     * the wrong theme or font.
+     * The theme, the font and the subtitle size. Null until DataStore has been read, so the first frame is
+     * never drawn in the wrong theme or font.
      */
     val look: StateFlow<Look?> = store.data
         .map { prefs ->
             Look(
                 dark = prefs[DARK] ?: true,
                 font = AppFont.entries.firstOrNull { it.name == prefs[FONT] } ?: AppFont.DEFAULT,
+                subtitleSize = SubtitleSize.entries.firstOrNull { it.name == prefs[SUBTITLE_SIZE] } ?: SubtitleSize.DEFAULT,
             )
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -65,6 +68,10 @@ class PrefsViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setFont(font: AppFont) {
         viewModelScope.launch { store.edit { it[FONT] = font.name } }
+    }
+
+    fun setSubtitleSize(size: SubtitleSize) {
+        viewModelScope.launch { store.edit { it[SUBTITLE_SIZE] = size.name } }
     }
 
     fun toggleDark() {

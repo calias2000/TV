@@ -34,6 +34,7 @@ import androidx.media3.ui.compose.state.rememberProgressStateWithTickInterval
 import androidx.tv.material3.Text
 import com.calias.tv.app.rememberNowMs
 import com.calias.tv.app.ui.Edge
+import com.calias.tv.app.ui.SubtitleSize
 import com.calias.tv.core.Channel
 import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.library.Category
@@ -51,13 +52,15 @@ private const val NEXT_OFFER_MS = 60_000L
  *   error and progress): the 2026 official way, instead of wrapping the old PlayerView.
  * - [ZapState]: which channel is shown and loaded, with the zap debounce.
  * - [PanelState] and [ChannelPanel]: the glass browse panels over the video.
- * - [ControlsState]: when the movie bar with the play/pause icon, and the skip flash, show.
+ * - [ControlsState]: when the movie bar with the play/pause icon, and the skip flash, show, and which
+ *   of its Audio / Subtitles buttons is highlighted.
+ * - [TracksState] and [TrackMenuCard]: the audio and subtitle tracks of the file, and the card to pick one.
  * - [playerKeys]: the remote-control keys.
  * - [VodOverlay], [PlayPauseIcon], [NextEpisodeCard], [SkipIndicator], [LoadingSpinner], [ErrorPanel]: what is drawn on the video.
  *
  * Live ([isLive]): every arrow key opens the panel, channel keys zap. Movies and episodes: UP shows
- * the bar and the play/pause icon (BACK hides them, they stay while paused), DOWN opens the panel,
- * OK pauses, left/right seek, channel keys step to the previous or next item. BACK on the
+ * the bar and the play/pause icon (BACK hides them, they stay while paused), DOWN opens the panel
+ * (with the bar showing, DOWN highlights its Audio and Subtitles buttons instead), OK pauses, left/right seek, channel keys step to the previous or next item. BACK on the
  * "Next episode" card cancels the automatic start.
  * [groups] are what the panel browses (live categories, or one flat list).
  *
@@ -66,7 +69,8 @@ private const val NEXT_OFFER_MS = 60_000L
  * closes the panel, and BACK again leaves. [startPlaying] false waits for the first OK.
  *
  * Movies and episodes: [startPosition] says where to start an item (resume), [onProgress] reports where
- * the user is. Live: [onTuned] reports each channel that starts. Each defaults to doing nothing.
+ * the user is, [subtitleSize] is the size of the subtitles. Live: [onTuned] reports each channel that
+ * starts. Each defaults to doing nothing (or the default size).
  */
 @OptIn(UnstableApi::class)
 @Composable
@@ -81,6 +85,7 @@ fun PlayerScreen(
     startPosition: suspend (Channel) -> Long = { 0L },
     onProgress: (Channel, positionMs: Long, durationMs: Long) -> Unit = { _, _, _ -> },
     onTuned: (Channel) -> Unit = {},
+    subtitleSize: SubtitleSize = SubtitleSize.DEFAULT,
 ) {
     val context = LocalContext.current
     val player = remember { buildPlayer(context) }
@@ -96,6 +101,7 @@ fun PlayerScreen(
     val progress = rememberProgressStateWithTickInterval(player, tickIntervalMs = 1_000)
     val paused = flags.paused
     val controls = rememberControlsState(paused)
+    val tracks = rememberTracksState(player)
     // Next episode: offered during the last seconds, and started by itself when the episode ends.
     val nextIndex = remember(isLive, zap.group, zap.loaded) {
         if (isLive) null else Episodes.nextIndex(zap.channels, zap.loaded)
@@ -159,23 +165,32 @@ fun PlayerScreen(
         if (wasStopped && isLive && started) retryToken++
         wasStopped = false
     }
-    // Declared after the exit handler, so it wins while the panel is open: BACK closes it first.
-    // The movie bar and its icon, shown only when nothing else is in the way.
-    val controlsVisible = !isLive && controls.shown && !panel.visible && error == null
+    // The movie bar and its icon, shown only when nothing else is in the way. An open Audio/Subtitles card
+    // takes their place, and they come back when it closes.
+    val controlsVisible = !isLive && controls.shown && !panel.visible && !controls.menuOpen && error == null
+    // Each handler is declared after the ones it must win over: BACK closes the card first, then the
+    // panel, then cancels the next-episode offer, then hides the bar, and only then leaves.
     BackHandler(onBack = onExit)
     BackHandler(enabled = controlsVisible, onBack = controls::hide)
     BackHandler(enabled = nextOffered, onBack = { nextCancelled = true })
     BackHandler(enabled = panel.visible, onBack = panel::close)
+    BackHandler(enabled = controls.menuOpen, onBack = controls::closeMenu)
 
-    // A failed stream closes the browse panel, so the error and its Retry button are in view.
-    LaunchedEffect(error) { if (error != null) panel.close() }
+    // A failed stream closes the browse panel and the movie bar with its card, so the error and its Retry
+    // button are in view and nothing else holds focus.
+    LaunchedEffect(error) {
+        if (error != null) {
+            panel.close()
+            controls.hide()
+        }
+    }
 
     // Key presses go to whichever composable has focus. While an error shows, focus is on the Retry
     // button (ErrorPanel asks for it); while the panel is open, on its rows (it asks for it);
     // otherwise it stays on the screen itself.
     val screenFocus = remember { FocusRequester() }
-    LaunchedEffect(error == null, panel.visible) {
-        if (error == null && !panel.visible) screenFocus.requestFocus()
+    LaunchedEffect(error == null, panel.visible, controls.menuOpen) {
+        if (error == null && !panel.visible && !controls.menuOpen) screenFocus.requestFocus()
     }
 
     Box(
@@ -187,7 +202,8 @@ fun PlayerScreen(
             .playerKeys(
                 isLive = isLive,
                 controlsEnabled = error == null,
-                listOpen = panel.visible,
+                listOpen = panel.visible || controls.menuOpen,
+                barOpen = controlsVisible,
                 nextEpisodeOffered = nextOffered,
                 onZap = { zap.zap(it) },
                 onTogglePlay = {
@@ -203,6 +219,7 @@ fun PlayerScreen(
                 onShowControls = controls::show,
                 onOpenPanel = { panel.open(zap.group) },
                 onNextEpisode = ::playNext,
+                onBarKey = controls::onBarKey,
             ),
     ) {
         ContentFrame(player = player, modifier = Modifier.fillMaxSize())
@@ -213,6 +230,13 @@ fun PlayerScreen(
                 title = zap.channels[zap.pending].name,
                 positionMs = { progress.currentPositionMs },
                 durationMs = { progress.durationMs },
+                highlighted = controls.button,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+            SubtitleText(
+                text = tracks.subtitle,
+                size = subtitleSize,
+                raised = controlsVisible,
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
             // The spinner takes the middle while the player waits for data.
@@ -260,6 +284,16 @@ fun PlayerScreen(
                 }
             },
         )
+
+        if (!isLive) {
+            TrackMenuCard(
+                visible = controls.menuOpen,
+                menu = controls.button ?: TrackMenu.AUDIO,
+                tracks = tracks,
+                onPicked = controls::closeMenu,
+                modifier = Modifier.align(Alignment.CenterEnd),
+            )
+        }
 
         // Nothing remembered to play yet: say what to do (the panel is open over this).
         if (!started) {

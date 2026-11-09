@@ -12,8 +12,8 @@ import androidx.compose.ui.input.key.type
  *
  * Same convention as OwnTV: CH+ goes to the NEXT item, CH- to the PREVIOUS one (see Zap.step).
  * - Live: UP, DOWN, LEFT and RIGHT all open the browse panel. CH+/CH- zap.
- * - Movies and episodes: UP shows the bar and the play/pause icon, DOWN opens the panel, LEFT/RIGHT
- *   seek. OK pauses, or plays the next episode while the "Next episode" card is offered.
+ * - Movies and episodes: UP shows the bar and the play/pause icon, DOWN opens the panel (while the bar
+ *   shows, the bar takes DOWN and the keys after it: [onBarKey]), LEFT/RIGHT seek. OK pauses, or plays the next episode while the "Next episode" card is offered.
  *   CH+/CH- step to the previous/next item.
  * - Panel open ([listOpen]): it owns the D-pad and OK (they reach the focused row); channel keys still zap.
  * - Error showing ([controlsEnabled] false): LEFT/RIGHT/OK reach the Retry button, DOWN still
@@ -23,6 +23,7 @@ fun Modifier.playerKeys(
     isLive: Boolean,
     controlsEnabled: Boolean,
     listOpen: Boolean,
+    barOpen: Boolean,
     nextEpisodeOffered: Boolean,
     onZap: (delta: Int) -> Unit,
     onTogglePlay: () -> Unit,
@@ -30,6 +31,7 @@ fun Modifier.playerKeys(
     onShowControls: () -> Unit,
     onOpenPanel: () -> Unit,
     onNextEpisode: () -> Unit,
+    onBarKey: (Key) -> Boolean,
 ): Modifier = onPreviewKeyEvent { event ->
     if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
     val controls = !isLive && controlsEnabled
@@ -40,6 +42,7 @@ fun Modifier.playerKeys(
         Key.MediaPlayPause -> { onTogglePlay(); true }
         else -> when {
             listOpen -> false
+            controls && barOpen && onBarKey(event.key) -> true
             event.key == Key.DirectionUp -> { if (isLive) onOpenPanel() else onShowControls(); true }
             event.key == Key.DirectionDown -> { onOpenPanel(); true }
             event.key == Key.DirectionCenter || event.key == Key.Enter ->
