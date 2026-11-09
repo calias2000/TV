@@ -1,5 +1,6 @@
 package com.calias.tv.app.player
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -90,6 +91,7 @@ fun ChannelPanel(
         var guideFocused by remember { mutableStateOf(false) }
         val guideEntry = remember { FocusRequester() }
         val listFocus = remember(state.level, state.group) { FocusRequester() }
+        BackHandler(enabled = guideFocused) { listFocus.requestFocus() }
         val shown = guideChannel ?: groups[playingGroup].channels[playingIndex]
         val schedule = if (showGuide) guide.schedule(shown.tvgId, nowMs) else emptyList()
 

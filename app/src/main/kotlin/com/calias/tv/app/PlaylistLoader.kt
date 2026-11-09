@@ -8,7 +8,7 @@ import kotlin.time.Duration.Companion.seconds
 object PlaylistLoader {
 
     // Playlist endpoint.
-    const val PLAYLIST_URL = "https://calias.me/api/iptv/live/1"
+    const val PLAYLIST_URL = "https://calias.me/api/iptv/live/2"
 
     private val TIMEOUT = 20.seconds
 

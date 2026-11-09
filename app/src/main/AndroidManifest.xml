@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Android app description. The leanback entries below mark this as an Android TV app. -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -10,7 +11,10 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
     <!-- networkSecurityConfig allows plain http streams. Accepted for a personal TV on a home network (see decisions/08). -->
+    <!-- enableOnBackInvokedCallback: Android 13+ hands BACK to the app through the platform back dispatcher. -->
     <application
+        android:enableOnBackInvokedCallback="true"
+        tools:targetApi="33"
         android:label="TV"
         android:icon="@mipmap/ic_launcher"
         android:banner="@drawable/tv_banner"
