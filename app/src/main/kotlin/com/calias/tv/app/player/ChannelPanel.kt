@@ -63,11 +63,10 @@ fun ChannelPanel(
     nowMs: Long,
     showGuide: Boolean,
     onPick: (group: Int, index: Int) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     AnimatedVisibility(
         visible = state.visible,
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         enter = slideInHorizontally { -it / 8 } + fadeIn(),
         exit = slideOutHorizontally { -it / 8 } + fadeOut(),
     ) {

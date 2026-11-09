@@ -2,6 +2,8 @@ package com.calias.tv.core.library
 
 import com.calias.tv.core.Channel
 import com.calias.tv.core.ContentKind
+import com.calias.tv.core.series.Show
+import com.calias.tv.core.series.Shows
 
 /** Where a channel sits in a list of categories: the category index and the index inside it. */
 data class Position(val group: Int, val index: Int)
@@ -34,6 +36,9 @@ object Library {
 
     fun series(channels: List<Channel>): List<Channel> =
         channels.filter { it.kind == ContentKind.SERIES }
+
+    /** The series episodes grouped by show, in the order the playlist first mentions each show. */
+    fun shows(channels: List<Channel>): List<Show> = Shows.group(series(channels))
 
     /** Where the channel with [streamUrl] is in [categories], or null if it is not there (or the url is null). */
     fun locate(categories: List<Category>, streamUrl: String?): Position? {

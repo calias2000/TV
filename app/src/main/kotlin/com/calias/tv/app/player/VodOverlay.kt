@@ -1,23 +1,18 @@
 package com.calias.tv.app.player
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -28,26 +23,8 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.calias.tv.app.ui.Edge
 import com.calias.tv.app.ui.GlassPanel
+import com.calias.tv.app.ui.ProgressBar
 import com.calias.tv.core.seek.Seek
-
-/** A thin white bar filled to [fraction] (0 to 1), gliding to each new value. Fixed colors: it sits on video. */
-@Composable
-fun GlideBar(fraction: Float, modifier: Modifier = Modifier) {
-    val animated by animateFloatAsState(targetValue = fraction, label = "bar")
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(6.dp)
-            .background(Color.White.copy(alpha = 0.3f), RoundedCornerShape(3.dp)),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(animated)
-                .fillMaxHeight()
-                .background(Color.White, RoundedCornerShape(3.dp)),
-        )
-    }
-}
 
 /**
  * The bar for movies and episodes, a glass panel floating at the bottom: title, a progress bar that
@@ -80,9 +57,11 @@ fun VodOverlay(
                 // Read here, not in the caller, so each progress tick recomposes only this bar.
                 val position = positionMs()
                 val duration = durationMs()
-                GlideBar(
+                ProgressBar(
                     fraction = if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f,
                     modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
+                    height = 6.dp,
+                    onVideo = true,
                 )
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(text = Seek.formatClock(position), color = Color.White)

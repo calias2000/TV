@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -74,9 +75,21 @@ fun AppBackground(content: @Composable () -> Unit) {
     }
 }
 
+/**
+ * While [focused], tints the background with the main color of the picture at [url], or [fallback]
+ * when it has none. The color arrives a moment after the card is first focused, so it is applied when
+ * it is ready, not only when focus changes. The picture is only read for the focused card.
+ */
+@Composable
+fun PictureGlow(focused: Boolean, url: String?, fallback: Color) {
+    val backdrop = LocalBackdrop.current
+    val tint = if (focused) rememberPictureColor(url) else null
+    LaunchedEffect(focused, tint) { if (focused) backdrop.color = tint ?: fallback }
+}
+
 /** The main color of the picture at [url], once loaded (null while loading, or if it has no clear color). */
 @Composable
-fun rememberPictureColor(url: String?): Color? {
+private fun rememberPictureColor(url: String?): Color? {
     val context = LocalContext.current
     val color by produceState<Color?>(initialValue = null, url) {
         value = null

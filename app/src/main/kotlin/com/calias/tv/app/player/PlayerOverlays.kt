@@ -33,6 +33,7 @@ import com.calias.tv.app.R
 import com.calias.tv.app.ui.Glass
 import com.calias.tv.app.ui.GlassButton
 import com.calias.tv.app.ui.GlassPanel
+import com.calias.tv.app.ui.ProgressBar
 import com.calias.tv.app.ui.Spinner
 
 // Small overlays drawn on top of the video. Fixed white-on-dark colors: they sit on video in
@@ -123,7 +124,7 @@ fun NextEpisodeCard(visible: Boolean, title: String, remainingFraction: () -> Fl
             ) {
                 Text(text = "Next episode  ·  OK to play", color = Color.White)
                 Text(text = title, color = Color.White.copy(alpha = 0.7f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                GlideBar(fraction = remainingFraction(), modifier = Modifier.padding(top = 8.dp))
+                ProgressBar(fraction = remainingFraction(), modifier = Modifier.padding(top = 8.dp), height = 6.dp, onVideo = true)
             }
         }
     }

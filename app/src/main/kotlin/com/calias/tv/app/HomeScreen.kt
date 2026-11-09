@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -33,16 +32,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.calias.tv.app.browse.ProgressBar
 import com.calias.tv.app.ui.Edge
 import com.calias.tv.app.ui.Glass
 import com.calias.tv.app.ui.GlassIconButton
 import com.calias.tv.app.ui.GlassPanel
 import com.calias.tv.app.ui.GlassSurface
 import com.calias.tv.app.ui.LocalBackdrop
+import com.calias.tv.app.ui.ProgressBar
 import com.calias.tv.app.ui.SectionTint
 import com.calias.tv.app.ui.Spinner
-import com.calias.tv.app.ui.rememberPictureColor
+import com.calias.tv.app.ui.PictureGlow
 import com.calias.tv.core.Channel
 import com.calias.tv.core.ContentKind
 import com.calias.tv.core.epg.Guide
@@ -83,16 +82,15 @@ fun HomeScreen(
         CardSpec(channel, now?.title, now?.progress(nowMs)) { onRecentLive(channel) }
     }
     val tiles = listOf(
-        HomeTileSpec("Live TV", LiveTv(recentLive.firstOrNull()?.streamUrl), counts?.let { count(it.live, "channel") }, SectionTint.Live, "Recently watched", liveCards),
-        HomeTileSpec("Movies", MovieList, counts?.let { count(it.movies, "movie") }, SectionTint.Movies, "Continue watching", resumeCards(ContentKind.MOVIE)),
-        HomeTileSpec("Series", SeriesList, counts?.let { count(it.episodes, "episode") }, SectionTint.Series, "Continue watching", resumeCards(ContentKind.SERIES)),
+        HomeTileSpec("Live TV", LiveTv(recentLive.firstOrNull()?.streamUrl), counts?.let { countOf(it.live, "channel") }, SectionTint.Live, "Recently watched", liveCards),
+        HomeTileSpec("Movies", MovieList, counts?.let { countOf(it.movies, "movie") }, SectionTint.Movies, "Continue watching", resumeCards(ContentKind.MOVIE)),
+        HomeTileSpec("Series", SeriesList, counts?.let { countOf(it.episodes, "episode") }, SectionTint.Series, "Continue watching", resumeCards(ContentKind.SERIES)),
     )
     val tileFocus = remember { List(tiles.size) { FocusRequester() } }
     var section by rememberSaveable { mutableIntStateOf(0) } // the tile in focus, or used last
     val backdrop = LocalBackdrop.current
     // The tiles cannot take focus while loading, so focus waits for the playlist.
     LaunchedEffect(ready) { if (ready) tileFocus[section].requestFocus() }
-    DisposableEffect(Unit) { onDispose { backdrop.color = null } }
 
     val cards = tiles[section].cards
 
@@ -174,7 +172,7 @@ fun HomeScreen(
 private val CARDS_AREA = 120.dp
 
 /** "1 movie", "2 movies". */
-private fun count(n: Int, noun: String) = if (n == 1) "$n $noun" else "$n ${noun}s"
+internal fun countOf(n: Int, noun: String) = if (n == 1) "$n $noun" else "$n ${noun}s"
 
 /** One Home tile: what it shows, where it leads, its backdrop color while focused, and the cards shown under it. */
 private class HomeTileSpec(
@@ -226,15 +224,12 @@ private fun HomeTile(label: String, count: String?, ready: Boolean, modifier: Mo
 
 /**
  * A compact glass card: the picture, the name, and one line (what is on now, or where it resumes).
- * While it has focus the background glows in the main color of its picture. That color arrives a moment
- * after the card is first focused, so it is applied when it is ready, not only when focus changes.
+ * While it has focus the background glows in the main color of its picture (see [PictureGlow]).
  */
 @Composable
 private fun ContinueCard(card: CardSpec, fallbackTint: Color) {
-    val backdrop = LocalBackdrop.current
-    val tint = rememberPictureColor(card.channel.logo)
     var focused by remember { mutableStateOf(false) }
-    LaunchedEffect(focused, tint) { if (focused) backdrop.color = tint ?: fallbackTint }
+    PictureGlow(focused, card.channel.logo, fallbackTint)
     GlassSurface(onClick = card.onClick, modifier = Modifier.width(260.dp).onFocusChanged { focused = it.hasFocus }) {
         Row(
             modifier = Modifier.padding(12.dp),

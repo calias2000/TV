@@ -2,9 +2,10 @@ package com.calias.tv.core.resume
 
 import com.calias.tv.core.Channel
 import com.calias.tv.core.ContentKind
+import com.calias.tv.core.series.Shows
 
-/** Where a movie or episode was left: its title, the position, and when it was saved. */
-data class ResumeRecord(val title: String, val positionMs: Long, val savedAt: Long)
+/** Where a movie or episode was left: its title, the position, when it was saved, and its length (0 if unknown). */
+data class ResumeRecord(val title: String, val positionMs: Long, val savedAt: Long, val durationMs: Long = 0)
 
 /** A movie or episode the user can continue, with where they stopped. */
 data class ContinueItem(val channel: Channel, val positionMs: Long)
@@ -24,14 +25,11 @@ object Resume {
     /** Below this, resuming is pointless: start from the beginning. */
     private const val MIN_MS = 10_000L
 
-    // "Show Name (2011) (US) - S01E01 - Pilot" -> "Show Name (2011) (US)"
-    private val episodeMarker = Regex("""^(.+?) - S\d+E\d+\b""")
-
     /** The record key: the show name for episodes, the full title for movies. Null for live. */
     fun key(channel: Channel): String? = when (channel.kind) {
         ContentKind.LIVE -> null
         ContentKind.MOVIE -> "movie:${channel.name}"
-        ContentKind.SERIES -> "series:" + (episodeMarker.find(channel.name)?.groupValues?.get(1) ?: channel.name)
+        ContentKind.SERIES -> "series:" + (Shows.showOf(channel.name) ?: channel.name)
     }
 
     /** The position to start from for [title], or 0 if the saved record is for another episode. */
@@ -52,9 +50,15 @@ object Resume {
     ): Map<String, ResumeRecord> {
         val finished = durationMs > 0 && positionMs >= durationMs - FINISHED_MS
         if (finished || positionMs < MIN_MS) return records - key
-        val updated = records + (key to ResumeRecord(title, positionMs, now))
+        val updated = records + (key to ResumeRecord(title, positionMs, now, durationMs))
         return updated.entries.sortedByDescending { it.value.savedAt }.take(MAX_RECORDS)
             .associate { it.key to it.value }
+    }
+
+    /** How far [channel] was left, from 0 to 1, or null if this exact title has no record (or its length is unknown). */
+    fun progress(records: Map<String, ResumeRecord>, channel: Channel): Float? {
+        val record = records[key(channel)]?.takeIf { it.title == channel.name && it.durationMs > 0 }
+        return record?.let { (it.positionMs.toFloat() / it.durationMs).coerceIn(0f, 1f) }
     }
 
     /**
@@ -69,16 +73,21 @@ object Resume {
             .take(limit)
     }
 
-    /** One line per record: key, savedAt, position, title (tab separated; the title goes last). */
+    /** One line per record: key, savedAt, position, duration, title (tab separated; the title goes last). */
     fun encode(records: Map<String, ResumeRecord>): String =
-        records.entries.joinToString("\n") { (k, r) -> "$k\t${r.savedAt}\t${r.positionMs}\t${r.title}" }
+        records.entries.joinToString("\n") { (k, r) -> "$k\t${r.savedAt}\t${r.positionMs}\t${r.durationMs}\t${r.title}" }
 
     /** Reads [encode] output. Lines that do not parse are skipped. */
     fun decode(text: String): Map<String, ResumeRecord> =
         text.lineSequence().mapNotNull { line ->
-            val p = line.split('\t', limit = 4)
+            val p = line.split('\t', limit = 5)
             val savedAt = p.getOrNull(1)?.toLongOrNull()
             val position = p.getOrNull(2)?.toLongOrNull()
-            if (p.size == 4 && savedAt != null && position != null) p[0] to ResumeRecord(p[3], position, savedAt) else null
+            val duration = p.getOrNull(3)?.toLongOrNull()
+            if (p.size == 5 && savedAt != null && position != null && duration != null) {
+                p[0] to ResumeRecord(p[4], position, savedAt, duration)
+            } else {
+                null
+            }
         }.toMap()
 }

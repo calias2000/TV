@@ -26,6 +26,8 @@ data object Home
 data class LiveTv(val channelUrl: String? = null)
 data object MovieList
 data object SeriesList
+/** The episodes of the show called [name]. */
+data class ShowEpisodes(val name: String)
 data object Settings
 /** A movie or episode ([kind]). Playback steps through the list of that kind (CH+/CH-). Live TV has its own destination. */
 data class Watch(val kind: ContentKind, val channelId: String)
@@ -98,28 +100,25 @@ fun AppNav(
             }
             entry<MovieList> {
                 val movies = remember(playlist) { playlist?.let { Library.movies(it.channels) }.orEmpty() }
-                ChannelListScreen(
-                    title = "Movies",
-                    channels = movies,
-                    onWatch = { open(Watch(ContentKind.MOVIE, it)) },
-                )
+                val resume by prefs.resume.collectAsStateWithLifecycle()
+                MoviesScreen(movies = movies, resume = resume, onWatch = { open(Watch(ContentKind.MOVIE, it)) })
             }
             entry<SeriesList> {
-                val episodes = remember(playlist) { playlist?.let { Library.series(it.channels) }.orEmpty() }
-                ChannelListScreen(
-                    title = "Series",
-                    channels = episodes,
-                    onWatch = { open(Watch(ContentKind.SERIES, it)) },
-                )
+                val shows = remember(playlist) { playlist?.let { Library.shows(it.channels) }.orEmpty() }
+                ShowsScreen(shows = shows, onOpen = { open(ShowEpisodes(it.name)) })
+            }
+            entry<ShowEpisodes> { key ->
+                val show = remember(playlist, key) { playlist?.let { Library.shows(it.channels) }?.firstOrNull { it.name == key.name } }
+                val resume by prefs.resume.collectAsStateWithLifecycle()
+                if (show != null) EpisodesScreen(show = show, resume = resume, onWatch = { open(Watch(ContentKind.SERIES, it)) })
             }
             entry<Settings> {
                 SettingsScreen(state = state, onSync = onSync, font = font, onFont = onFont)
             }
             entry<Watch> { key ->
-                val isMovie = key.kind == ContentKind.MOVIE
                 val groups = remember(playlist, key.kind) {
-                    val channels = playlist?.let { if (isMovie) Library.movies(it.channels) else Library.series(it.channels) }.orEmpty()
-                    listOf(Category(if (isMovie) "Movies" else "Series", channels))
+                    val channels = playlist?.channels.orEmpty().filter { it.kind == key.kind }
+                    listOf(Category(if (key.kind == ContentKind.MOVIE) "Movies" else "Series", channels))
                 }
                 val index = remember(groups, key.channelId) { groups[0].channels.indexOfFirst { it.id == key.channelId } }
                 if (index >= 0) {

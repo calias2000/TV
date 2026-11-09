@@ -62,8 +62,18 @@ class ResumeTest {
 
     @Test
     fun `encode and decode round trip, bad lines skipped`() {
-        val map = mapOf("series:A - B" to ResumeRecord("A - B - S01E01 - X", 61_000, 5))
+        val map = mapOf("series:A - B" to ResumeRecord("A - B - S01E01 - X", 61_000, 5, 600_000))
         assertEquals(map, Resume.decode(Resume.encode(map)))
         assertTrue(Resume.decode("garbage\n\n").isEmpty())
+    }
+
+    @Test
+    fun `progress is the saved fraction, only for the same title with a known length`() {
+        val movie = ch("M", ContentKind.MOVIE)
+        val records = Resume.update(emptyMap(), "movie:M", "M", 150_000, 600_000, now = 1)
+        assertEquals(0.25f, Resume.progress(records, movie))
+        assertNull(Resume.progress(records, ch("Other", ContentKind.MOVIE)))
+        assertNull(Resume.progress(mapOf("movie:M" to ResumeRecord("M", 60_000, 1)), movie)) // length unknown
+        assertNull(Resume.progress(records, ch("M", ContentKind.LIVE)))
     }
 }

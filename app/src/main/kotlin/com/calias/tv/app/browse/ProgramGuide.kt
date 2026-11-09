@@ -23,6 +23,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.calias.tv.app.formatTime
 import com.calias.tv.app.ui.Glass
+import com.calias.tv.app.ui.ProgressBar
 import com.calias.tv.app.ui.GlassSurface
 import com.calias.tv.app.ui.fadeEdges
 import com.calias.tv.core.epg.Program
