@@ -13,11 +13,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key as composeKey
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -39,6 +41,12 @@ import com.calias.tv.app.ui.GlassPanel
 import com.calias.tv.core.Channel
 import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.library.Category
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+
+/** How long the cursor must rest on a channel before the guide card shows that channel. Our own value. */
+private val GUIDE_DELAY = 150.milliseconds
 
 /**
  * The browse panels over the full-screen video: a floating glass card on the left to pick a channel,
@@ -72,10 +80,17 @@ fun ChannelPanel(
     ) {
         val hasGroups = groups.size > 1
         var underCursor by remember { mutableStateOf<Channel?>(null) }
+        var guideChannel by remember { mutableStateOf<Channel?>(null) }
+        LaunchedEffect(Unit) {
+            snapshotFlow { underCursor }.collectLatest {
+                delay(GUIDE_DELAY)
+                guideChannel = it
+            }
+        }
         var guideFocused by remember { mutableStateOf(false) }
         val guideEntry = remember { FocusRequester() }
         val listFocus = remember(state.level, state.group) { FocusRequester() }
-        val shown = underCursor ?: groups[playingGroup].channels[playingIndex]
+        val shown = guideChannel ?: groups[playingGroup].channels[playingIndex]
         val schedule = if (showGuide) guide.schedule(shown.tvgId, nowMs) else emptyList()
 
         Row(
@@ -96,6 +111,7 @@ fun ChannelPanel(
                             when {
                                 guideFocused -> Unit
                                 state.level == PanelLevel.GROUPS -> state.showChannels(state.group)
+                                underCursor != null && underCursor?.id != shown.id -> guideChannel = underCursor
                                 schedule.isNotEmpty() -> guideEntry.requestFocus()
                             }
                             true
