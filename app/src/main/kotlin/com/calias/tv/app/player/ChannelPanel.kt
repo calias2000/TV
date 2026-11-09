@@ -82,7 +82,7 @@ fun ChannelPanel(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = Edge.X, vertical = Edge.Y)
+                .padding(Edge.Margin)
                 .onPreviewKeyEvent { event ->
                     if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                     when (event.key) {

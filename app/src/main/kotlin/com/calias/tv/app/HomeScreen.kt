@@ -41,6 +41,7 @@ import com.calias.tv.app.ui.GlassPanel
 import com.calias.tv.app.ui.GlassSurface
 import com.calias.tv.app.ui.LocalBackdrop
 import com.calias.tv.app.ui.SectionTint
+import com.calias.tv.app.ui.Spinner
 import com.calias.tv.app.ui.rememberPictureColor
 import com.calias.tv.core.Channel
 import com.calias.tv.core.ContentKind
@@ -99,11 +100,11 @@ fun HomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(vertical = Edge.Y),
+                .padding(vertical = Edge.Margin),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = Edge.X),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = Edge.Margin),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -119,7 +120,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically),
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = Edge.X),
+                    modifier = Modifier.padding(horizontal = Edge.Margin),
                     horizontalArrangement = Arrangement.spacedBy(24.dp),
                 ) {
                     tiles.forEachIndexed { index, tile ->
@@ -154,7 +155,7 @@ fun HomeScreen(
                         // margin); the margin is its content padding.
                         LazyRow(
                             modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(horizontal = Edge.X),
+                            contentPadding = PaddingValues(horizontal = Edge.Margin),
                             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
                         ) {
                             items(cards, key = { it.channel.id }) { card ->
@@ -165,7 +166,7 @@ fun HomeScreen(
                 }
             }
         }
-        StatusPill(state, Modifier.align(Alignment.BottomCenter).padding(bottom = Edge.Y))
+        StatusPill(state, Modifier.align(Alignment.BottomCenter).padding(Edge.Margin))
     }
 }
 
@@ -259,13 +260,19 @@ private fun ContinueCard(card: CardSpec, fallbackTint: Color) {
 }
 
 /**
- * Shown only while the playlist loads or when it failed, at the bottom of the screen so nothing moves
- * when it appears or goes. Not interactive, so it never takes focus. When all is well, nothing shows.
+ * Shown only while the playlist loads (a spinner) or when it failed (the reason), at the bottom of the
+ * screen so nothing moves when it appears or goes. Not interactive, so it never takes focus. When all
+ * is well, nothing shows.
  */
 @Composable
 private fun StatusPill(state: PlaylistState, modifier: Modifier = Modifier) {
     if (state is PlaylistState.Loaded) return
     GlassPanel(modifier = modifier, fill = Glass.colors.fill, edge = Glass.colors.edge) {
-        Text(text = statusText(state), modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp), maxLines = 2)
+        val text = statusText(state)
+        if (text == null) {
+            Spinner(modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp), diameter = 24.dp)
+        } else {
+            Text(text = text, modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp), maxLines = 2)
+        }
     }
 }

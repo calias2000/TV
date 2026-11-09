@@ -51,7 +51,7 @@ fun VodOverlay(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.Black.copy(alpha = 0.65f))
-                .padding(horizontal = Edge.X, vertical = Edge.Y),
+                .padding(Edge.Margin),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(text = title, color = Color.White, style = MaterialTheme.typography.titleLarge)

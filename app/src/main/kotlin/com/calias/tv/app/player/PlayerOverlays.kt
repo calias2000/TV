@@ -7,8 +7,11 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,6 +26,7 @@ import androidx.tv.material3.Text
 import com.calias.tv.app.ui.Edge
 import com.calias.tv.app.ui.Glass
 import com.calias.tv.app.ui.GlassButton
+import com.calias.tv.app.ui.Spinner
 
 // Small overlays drawn on top of the video. Fixed white-on-dark colors: they sit on video in
 // either theme.
@@ -34,7 +38,7 @@ import com.calias.tv.app.ui.GlassButton
 @Composable
 fun LiveChannelLabel(visible: Boolean, name: String, now: String?, next: String?, modifier: Modifier = Modifier) {
     AnimatedVisibility(visible = visible, modifier = modifier, enter = fadeIn(), exit = fadeOut()) {
-        Column(modifier = Modifier.padding(horizontal = Edge.X, vertical = Edge.Y)) {
+        Column(modifier = Modifier.padding(Edge.Margin)) {
             Text(text = name, color = Color.White)
             if (now != null) Text(text = now, color = Color.White)
             if (next != null) Text(text = "Next: $next", color = Color.White.copy(alpha = 0.7f))
@@ -42,21 +46,20 @@ fun LiveChannelLabel(visible: Boolean, name: String, now: String?, next: String?
     }
 }
 
-/** Shown while the player waits for data: at start, after a seek, on a slow network. */
+/** Shown while the player waits for data: at start, after a seek, on a slow network. A spinner on a dark disc, so it reads on any picture. */
 @Composable
-fun BufferingPill(modifier: Modifier = Modifier) {
-    Text(
-        text = "Buffering…",
-        color = Color.White,
-        modifier = modifier
-            .background(Color.Black.copy(alpha = 0.65f), RoundedCornerShape(50))
-            .padding(horizontal = 32.dp, vertical = 16.dp),
-    )
+fun LoadingSpinner(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.size(88.dp).background(Color.Black.copy(alpha = 0.6f), CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Spinner(diameter = 44.dp, color = Color.White)
+    }
 }
 
 /**
  * Playback failed: the error code and a Retry button that takes focus, so OK works. The screen leaves
- * this panel out while the browse panel is open, so it takes focus again each time it comes back.
+ * this panel out while the browse panel is open (an error closes that panel by itself), so it takes focus again each time it comes back.
  */
 @Composable
 fun ErrorPanel(code: String, onRetry: () -> Unit, modifier: Modifier = Modifier) {

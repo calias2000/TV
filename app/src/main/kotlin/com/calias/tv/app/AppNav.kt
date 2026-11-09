@@ -79,7 +79,7 @@ fun AppNav(
             entry<LiveTv> { key ->
                 val groups = remember(playlist) { playlist?.let { Library.liveCategories(it.channels) }.orEmpty() }
                 if (groups.isEmpty()) {
-                    Text(text = "No live channels", modifier = Modifier.padding(horizontal = Edge.X, vertical = Edge.Y))
+                    Text(text = "No live channels", modifier = Modifier.padding(Edge.Margin))
                 } else {
                     // Opens on the channel Home asked for (the last one played) and plays it. Without one,
                     // nothing plays until OK.

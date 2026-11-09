@@ -58,12 +58,11 @@ private val LightGlass = GlassColors(
 )
 
 /**
- * The margins every screen keeps from the screen edge, so content stays inside the TV's safe area
- * (about 5%: 48 dp at the sides, 27 dp top and bottom) and all screens line up.
+ * The margin every screen keeps from the screen edge, the same on all four sides, so content lines up
+ * everywhere. If a TV cuts off the edges of the picture, raise it here and every screen follows.
  */
 object Edge {
-    val X = 48.dp
-    val Y = 32.dp
+    val Margin = 32.dp
 }
 
 /** The backdrop color of each Home section. Our own picks: change them here. */

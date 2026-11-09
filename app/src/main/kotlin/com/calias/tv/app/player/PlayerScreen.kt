@@ -53,7 +53,7 @@ private const val NEXT_OFFER_MS = 30_000L
  * - [PanelState] and [ChannelPanel]: the glass browse panels over the video.
  * - [ControlsState]: when the header, the progress bar and the skip flash show.
  * - [playerKeys]: the remote-control keys.
- * - [VodOverlay], [LiveChannelLabel], [BufferingPill], [ErrorPanel]: what is drawn on the video.
+ * - [VodOverlay], [LiveChannelLabel], [LoadingSpinner], [ErrorPanel]: what is drawn on the video.
  *
  * Live ([isLive]): every arrow key opens the panel, channel keys zap. Movies and episodes: UP shows
  * the title and progress bar, DOWN opens the panel, OK pauses, left/right seek, channel keys step to
@@ -159,6 +159,9 @@ fun PlayerScreen(
     BackHandler(onBack = onExit)
     BackHandler(enabled = panel.visible, onBack = panel::close)
 
+    // A failed stream closes the browse panel, so the error and its Retry button are in view.
+    LaunchedEffect(error) { if (error != null) panel.close() }
+
     // Key presses go to whichever composable has focus. While an error shows, focus is on the Retry
     // button (ErrorPanel asks for it); while the panel is open, on its rows (it asks for it);
     // otherwise it stays on the screen itself.
@@ -223,7 +226,7 @@ fun PlayerScreen(
                 title = nextIndex?.let { zap.channels[it].name }.orEmpty(),
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = Edge.X, bottom = 220.dp),
+                    .padding(end = Edge.Margin, bottom = 220.dp),
             )
             SkipIndicator(
                 visible = controls.skipVisible,
@@ -264,8 +267,9 @@ fun PlayerScreen(
             )
         }
 
-        // The pill and the error panel sit mid-screen, between the panels: they wait for the panel to close.
-        if (flags.buffering && error == null && !panel.visible) BufferingPill(Modifier.align(Alignment.Center))
+        // Mid-screen, between the two cards, so it shows with the panel open too. The error panel needs focus
+        // for its Retry button, so it waits for the panel to close (an error closes the panel, see above).
+        if (flags.buffering && error == null) LoadingSpinner(Modifier.align(Alignment.Center))
         if (error != null && !panel.visible) {
             ErrorPanel(
                 code = error.errorCodeName,
