@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
@@ -14,6 +13,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.calias.tv.app.player.PlayerScreen
 import com.calias.tv.core.ContentKind
 import com.calias.tv.app.ui.AppFont
+import com.calias.tv.app.ui.Edge
 import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.library.Category
 import com.calias.tv.core.library.Library
@@ -22,7 +22,7 @@ import com.calias.tv.core.resume.Resume
 
 // Destinations. Each object or data class is one key on the back stack.
 data object Home
-/** Live TV. [channelUrl]: the channel to open on (else the last one played). */
+/** Live TV. [channelUrl]: the channel to open on (null: none, the user picks). */
 data class LiveTv(val channelUrl: String? = null)
 data object MovieList
 data object SeriesList
@@ -48,13 +48,14 @@ fun AppNav(
     val open: (Any) -> Unit = { backStack.add(it) }
     val back: () -> Unit = { backStack.removeLastOrNull() }
     val playlist = (state as? PlaylistState.Loaded)?.playlist
-    val resumeRecords by prefs.resume.collectAsStateWithLifecycle()
 
     NavDisplay(
         backStack = backStack,
         onBack = back,
         entryProvider = entryProvider {
             entry<Home> {
+                // Collected here, not above: a saved position must only redraw Home, not every screen.
+                val resumeRecords by prefs.resume.collectAsStateWithLifecycle()
                 val resume = remember(resumeRecords, playlist) {
                     playlist?.let { Resume.continueWatching(resumeRecords, it.channels) }.orEmpty()
                 }
@@ -78,13 +79,11 @@ fun AppNav(
             entry<LiveTv> { key ->
                 val groups = remember(playlist) { playlist?.let { Library.liveCategories(it.channels) }.orEmpty() }
                 if (groups.isEmpty()) {
-                    Text(text = "No live channels", modifier = Modifier.padding(48.dp))
+                    Text(text = "No live channels", modifier = Modifier.padding(horizontal = Edge.X, vertical = Edge.Y))
                 } else {
-                    // Opens on the asked channel, else the last one played, and plays it. Without one,
-                    // nothing plays until OK. Read once when the screen opens: tuning saves a new value,
-                    // which must not move the screen.
-                    val recentUrls by prefs.recentLive.collectAsStateWithLifecycle()
-                    val start = remember(groups) { Library.locate(groups, key.channelUrl ?: recentUrls.firstOrNull()) }
+                    // Opens on the channel Home asked for (the last one played) and plays it. Without one,
+                    // nothing plays until OK.
+                    val start = remember(groups, key) { Library.locate(groups, key.channelUrl) }
                     PlayerScreen(
                         groups = groups,
                         initialGroup = start?.group ?: 0,
@@ -92,24 +91,24 @@ fun AppNav(
                         isLive = true,
                         startPlaying = start != null,
                         guide = guide,
-                        startPosition = prefs::startPosition,
-                        onProgress = prefs::saveProgress,
                         onTuned = prefs::saveRecentLive,
                         onExit = back,
                     )
                 }
             }
             entry<MovieList> {
+                val movies = remember(playlist) { playlist?.let { Library.movies(it.channels) }.orEmpty() }
                 ChannelListScreen(
                     title = "Movies",
-                    channels = playlist?.let { Library.movies(it.channels) }.orEmpty(),
+                    channels = movies,
                     onWatch = { open(Watch(ContentKind.MOVIE, it)) },
                 )
             }
             entry<SeriesList> {
+                val episodes = remember(playlist) { playlist?.let { Library.series(it.channels) }.orEmpty() }
                 ChannelListScreen(
                     title = "Series",
-                    channels = playlist?.let { Library.series(it.channels) }.orEmpty(),
+                    channels = episodes,
                     onWatch = { open(Watch(ContentKind.SERIES, it)) },
                 )
             }
@@ -118,11 +117,14 @@ fun AppNav(
             }
             entry<Watch> { key ->
                 val isMovie = key.kind == ContentKind.MOVIE
-                val channels = playlist?.let { if (isMovie) Library.movies(it.channels) else Library.series(it.channels) }.orEmpty()
-                val index = channels.indexOfFirst { it.id == key.channelId }
+                val groups = remember(playlist, key.kind) {
+                    val channels = playlist?.let { if (isMovie) Library.movies(it.channels) else Library.series(it.channels) }.orEmpty()
+                    listOf(Category(if (isMovie) "Movies" else "Series", channels))
+                }
+                val index = remember(groups, key.channelId) { groups[0].channels.indexOfFirst { it.id == key.channelId } }
                 if (index >= 0) {
                     PlayerScreen(
-                        groups = listOf(Category(if (isMovie) "Movies" else "Series", channels)),
+                        groups = groups,
                         initialGroup = 0,
                         initialIndex = index,
                         isLive = false,
@@ -130,7 +132,6 @@ fun AppNav(
                         guide = guide,
                         startPosition = prefs::startPosition,
                         onProgress = prefs::saveProgress,
-                        onTuned = {},
                         onExit = back,
                     )
                 }

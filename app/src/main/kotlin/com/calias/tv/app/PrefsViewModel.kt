@@ -28,6 +28,9 @@ private val RESUME = stringPreferencesKey("resume")
 private val RECENT_LIVE = stringPreferencesKey("recent_live")
 private val FONT = stringPreferencesKey("font")
 
+/** The theme and font the app is drawn in. */
+data class Look(val dark: Boolean, val font: AppFont)
+
 /**
  * The small things the app remembers between runs: the theme, where each movie or series was
  * left, the recent live channels and the font. Screens use this ViewModel; none of them touch DataStore directly. Writes run in
@@ -37,9 +40,18 @@ class PrefsViewModel(app: Application) : AndroidViewModel(app) {
 
     private val store = app.dataStore
 
-    val dark: StateFlow<Boolean> = store.data
-        .map { it[DARK] ?: true }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    /**
+     * The theme and the font. Null until DataStore has been read, so the first frame is never drawn in
+     * the wrong theme or font.
+     */
+    val look: StateFlow<Look?> = store.data
+        .map { prefs ->
+            Look(
+                dark = prefs[DARK] ?: true,
+                font = AppFont.entries.firstOrNull { it.name == prefs[FONT] } ?: AppFont.DEFAULT,
+            )
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     /** Everything remembered about where movies and episodes were left, for "Continue watching". */
     val resume: StateFlow<Map<String, ResumeRecord>> = store.data
@@ -51,16 +63,12 @@ class PrefsViewModel(app: Application) : AndroidViewModel(app) {
         .map { Recents.decode(it[RECENT_LIVE].orEmpty()) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    val font: StateFlow<AppFont> = store.data
-        .map { prefs -> AppFont.entries.firstOrNull { it.name == prefs[FONT] } ?: AppFont.MANROPE }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, AppFont.MANROPE)
-
     fun setFont(font: AppFont) {
         viewModelScope.launch { store.edit { it[FONT] = font.name } }
     }
 
     fun toggleDark() {
-        viewModelScope.launch { store.edit { it[DARK] = !dark.value } }
+        viewModelScope.launch { store.edit { it[DARK] = !(it[DARK] ?: true) } }
     }
 
     /** Remember [channel] as the most recent live channel. */

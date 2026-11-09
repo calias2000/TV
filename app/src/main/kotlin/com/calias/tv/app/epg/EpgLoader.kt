@@ -12,11 +12,11 @@ import kotlin.time.Duration.Companion.hours
  */
 object EpgLoader {
 
-    // The guide is about 11 MB, bigger than the playlist, so it gets a longer read timeout.
-    private const val READ_TIMEOUT_MS = 60_000
+    // The guide is about 11 MB, bigger than the playlist, so it gets a longer time budget.
+    private const val TIMEOUT_MS = 90_000L
 
     suspend fun load(epgUrl: String, wantedIds: Set<String>, nowMs: Long): Guide =
-        httpGet(epgUrl, "Guide", READ_TIMEOUT_MS) { stream ->
+        httpGet(epgUrl, "Guide", TIMEOUT_MS) { stream ->
             val parser = Xml.newPullParser()
             parser.setInput(stream, null) // null: the parser reads the encoding from the XML header
             Xmltv.parse(parser, wantedIds, nowMs - 1.hours.inWholeMilliseconds, nowMs + 24.hours.inWholeMilliseconds)

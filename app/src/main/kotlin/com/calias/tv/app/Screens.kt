@@ -8,13 +8,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.calias.tv.app.browse.BrowseList
 import com.calias.tv.app.browse.ChannelRow
 import com.calias.tv.app.ui.AppFont
-import com.calias.tv.app.ui.GlassSurface
+import com.calias.tv.app.ui.Edge
+import com.calias.tv.app.ui.GlassButton
 import com.calias.tv.core.Channel
 
 /** What the playlist state says, for Settings and for Home's status pill. */
@@ -27,7 +27,7 @@ internal fun statusText(state: PlaylistState): String = when (state) {
 /** A flat list of movies or series episodes. */
 @Composable
 fun ChannelListScreen(title: String, channels: List<Channel>, onWatch: (channelId: String) -> Unit) {
-    Column(modifier = Modifier.fillMaxSize().padding(48.dp)) {
+    Column(modifier = Modifier.fillMaxSize().padding(horizontal = Edge.X, vertical = Edge.Y)) {
         Text(text = title, style = MaterialTheme.typography.headlineMedium)
         if (channels.isEmpty()) {
             Text(text = "Nothing to show. Check Settings.", modifier = Modifier.padding(top = 24.dp))
@@ -44,23 +44,21 @@ fun ChannelListScreen(title: String, channels: List<Channel>, onWatch: (channelI
 @Composable
 fun SettingsScreen(state: PlaylistState, onSync: () -> Unit, font: AppFont, onFont: (AppFont) -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(48.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = Edge.X, vertical = Edge.Y),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         Text(text = "Settings", style = MaterialTheme.typography.headlineMedium)
         Text(text = "Playlist source: ${PlaylistLoader.PLAYLIST_URL}")
         Text(text = statusText(state))
-        Button(onClick = onSync) { Text(text = "Sync now") }
+        GlassButton(text = "Sync now", onClick = onSync)
         Text(text = "Font", style = MaterialTheme.typography.titleMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             AppFont.entries.forEach { option ->
-                GlassSurface(onClick = { onFont(option) }) {
-                    Text(
-                        text = if (option == font) "✓ ${option.label}" else option.label,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                        style = MaterialTheme.typography.bodyLarge.copy(fontFamily = option.family),
-                    )
-                }
+                GlassButton(
+                    text = if (option == font) "✓ ${option.label}" else option.label,
+                    onClick = { onFont(option) },
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = option.family),
+                )
             }
         }
     }

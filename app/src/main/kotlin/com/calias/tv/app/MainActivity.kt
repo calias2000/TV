@@ -4,7 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.calias.tv.app.ui.AppBackground
 import com.calias.tv.app.ui.AppTheme
@@ -15,13 +19,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val prefs: PrefsViewModel = viewModel()
-            // Dark or light, switched from Home and remembered between runs.
-            val dark by prefs.dark.collectAsStateWithLifecycle()
-            val font by prefs.font.collectAsStateWithLifecycle()
-            AppTheme(dark = dark, font = font) {
+            // Dark or light and the font, remembered between runs. Nothing is drawn until they are read.
+            val look = prefs.look.collectAsStateWithLifecycle().value ?: return@setContent
+            AppTheme(dark = look.dark, font = look.font) {
                 // One shared background behind every screen.
                 AppBackground {
                     val viewModel: PlaylistViewModel = viewModel()
+                    // While the app is in front, keep the guide up to date (it also runs again on every return).
+                    val lifecycle = LocalLifecycleOwner.current.lifecycle
+                    LaunchedEffect(viewModel) { lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.keepGuideFresh() } }
                     val state by viewModel.state.collectAsStateWithLifecycle()
                     val guide by viewModel.guide.collectAsStateWithLifecycle()
                     AppNav(
@@ -29,7 +35,7 @@ class MainActivity : ComponentActivity() {
                         guide = guide,
                         onSync = viewModel::sync,
                         onToggleTheme = prefs::toggleDark,
-                        font = font,
+                        font = look.font,
                         onFont = prefs::setFont,
                         prefs = prefs,
                     )

@@ -22,7 +22,7 @@ private val ZAP_DEBOUNCE = 400.milliseconds
 /**
  * Which item is shown ([pending], changes on every key press) and which is loaded ([loaded],
  * follows [pending] after [ZAP_DEBOUNCE]), inside the current [group]. Zapping steps through that
- * group; [select] jumps to any group and item at once (sidebar pick). A plain state holder.
+ * group; [select] jumps to any group and item at once (panel pick). A plain state holder.
  */
 @Stable
 class ZapState(private val groups: List<Category>, initialGroup: Int, initialIndex: Int) {

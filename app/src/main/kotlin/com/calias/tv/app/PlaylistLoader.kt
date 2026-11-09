@@ -9,9 +9,9 @@ object PlaylistLoader {
     // Playlist endpoint.
     const val PLAYLIST_URL = "https://calias.me/api/iptv/live/1"
 
-    private const val READ_TIMEOUT_MS = 15_000
+    private const val TIMEOUT_MS = 20_000L
 
-    suspend fun load(): Playlist = httpGet(PLAYLIST_URL, "Playlist", READ_TIMEOUT_MS) { stream ->
+    suspend fun load(): Playlist = httpGet(PLAYLIST_URL, "Playlist", TIMEOUT_MS) { stream ->
         M3uParser.parse(stream.bufferedReader(Charsets.UTF_8).readText())
     }
 }

@@ -15,25 +15,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.CardDefaults
-import androidx.tv.material3.ClickableSurfaceDefaults
-import androidx.tv.material3.Card
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import com.calias.tv.app.ChannelLogo
 import com.calias.tv.app.ui.Glass
+import com.calias.tv.app.ui.GlassSurface
 import com.calias.tv.core.Channel
 
 /**
- * The one row used wherever the app lists groups, channels, movies or episodes, so every list
- * looks and behaves the same. Every playlist entry is its own row, even when names repeat.
+ * The one row used wherever the app lists groups, channels, movies or episodes, so every list looks
+ * and behaves the same. Every playlist entry is its own row, even when names repeat.
  *
  * - [channel]: shows its logo (or poster) before the text.
  * - [subtitle] and [progress]: what is on now and how far along it is (live, from the guide).
+ * - [trailing]: a muted note at the end of the row, such as the size of a group.
  * - [playing]: null leaves out the marker column; true or false adds it, with a ▶ when true.
- * - [onVideo]: fixed white-on-dark colors for rows drawn over the video; otherwise theme colors.
+ * - [onVideo]: for rows on the panels over the video: light on dark in either theme.
  * No focus zoom, so rows stay aligned and never spill past the margin.
  */
 @Composable
@@ -43,52 +42,40 @@ fun ChannelRow(
     channel: Channel? = null,
     subtitle: String? = null,
     progress: Float? = null,
+    trailing: String? = null,
     playing: Boolean? = null,
     onVideo: Boolean = false,
     onClick: () -> Unit,
 ) {
-    if (onVideo) {
-        Surface(
-            onClick = onClick,
-            modifier = modifier.fillMaxWidth(),
-            shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(8.dp)),
-            scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
-            colors = ClickableSurfaceDefaults.colors(
-                containerColor = Color.Transparent,
-                contentColor = Color.White,
-                focusedContainerColor = Color.White.copy(alpha = 0.22f),
-                focusedContentColor = Color.White,
-                pressedContainerColor = Color.White.copy(alpha = 0.3f),
-                pressedContentColor = Color.White,
-            ),
-        ) {
-            RowContent(title, channel, subtitle, progress, playing)
-        }
-    } else {
-        Card(
-            onClick = onClick,
-            modifier = modifier.fillMaxWidth(),
-            scale = CardDefaults.scale(focusedScale = 1f),
-        ) {
-            RowContent(title, channel, subtitle, progress, playing)
-        }
-    }
-}
-
-@Composable
-private fun RowContent(title: String, channel: Channel?, subtitle: String?, progress: Float?, playing: Boolean?) {
-    Row(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    val colors = if (onVideo) Glass.overVideo else Glass.colors
+    GlassSurface(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        colors = colors,
     ) {
-        // Fixed-width marker column, so titles line up on every row.
-        if (playing != null) Text(text = if (playing) "▶" else "", modifier = Modifier.width(24.dp))
-        if (channel != null) ChannelLogo(channel)
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, maxLines = 2)
-            if (subtitle != null) Text(text = subtitle, style = MaterialTheme.typography.bodySmall, maxLines = 1)
-            if (progress != null) ProgressBar(progress, Modifier.padding(top = 4.dp))
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Fixed-width marker column, so titles line up on every row.
+            if (playing != null) Text(text = if (playing) "▶" else "", modifier = Modifier.width(18.dp))
+            if (channel != null) ChannelLogo(channel)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, maxLines = if (subtitle == null) 2 else 1, overflow = TextOverflow.Ellipsis)
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.textMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (progress != null) ProgressBar(progress, Modifier.padding(top = 3.dp))
+            }
+            if (trailing != null) Text(text = trailing, style = MaterialTheme.typography.bodySmall, color = colors.textMuted)
         }
     }
 }

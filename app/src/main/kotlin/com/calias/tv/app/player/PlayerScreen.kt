@@ -31,10 +31,9 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.ContentFrame
 import androidx.media3.ui.compose.state.rememberErrorState
 import androidx.media3.ui.compose.state.rememberProgressStateWithTickInterval
-import com.calias.tv.app.browse.LiveBrowse
-import com.calias.tv.app.browse.MiniPlayerOverlay
-import com.calias.tv.app.browse.VideoFrame
+import androidx.tv.material3.Text
 import com.calias.tv.app.rememberNowMs
+import com.calias.tv.app.ui.Edge
 import com.calias.tv.core.Channel
 import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.library.Category
@@ -51,22 +50,22 @@ private const val NEXT_OFFER_MS = 30_000L
  * - Media3's Compose UI module ([ContentFrame] for the video, state holders for playback state,
  *   error and progress): the 2026 official way, instead of wrapping the old PlayerView.
  * - [ZapState]: which channel is shown and loaded, with the zap debounce.
- * - [SidebarState] and [ChannelSidebar]: the transparent browse overlay.
+ * - [PanelState] and [ChannelPanel]: the glass browse panels over the video.
  * - [ControlsState]: when the header, the progress bar and the skip flash show.
  * - [playerKeys]: the remote-control keys.
  * - [VodOverlay], [LiveChannelLabel], [BufferingPill], [ErrorPanel]: what is drawn on the video.
  *
- * UP shows the info (header, and the progress bar on movies and episodes), DOWN opens the sidebar.
- * Live ([isLive]): LEFT and RIGHT open the sidebar too, channel keys zap. Movies and episodes: OK
- * pauses, left/right seek, channel keys step to the previous or next item.
- * [groups] are what the sidebar browses (live categories, or one flat list).
+ * Live ([isLive]): every arrow key opens the panel, channel keys zap. Movies and episodes: UP shows
+ * the title and progress bar, DOWN opens the panel, OK pauses, left/right seek, channel keys step to
+ * the previous or next item.
+ * [groups] are what the panel browses (live categories, or one flat list).
  *
- * Live starts on the Live browse screen ([LiveBrowse]): the same video, in a small frame, beside the
- * lists. OK on a channel plays it there, OK on the playing one goes full screen, BACK from full screen
- * returns to the lists. Full screen and mini player share one player and one video view, so nothing
- * reloads. [startPlaying] false waits for the first OK. [onTuned] reports each live channel that starts.
+ * Live opens with the panel already open over the playing channel. Moving in it only browses. OK on a
+ * channel plays it and keeps the panel, OK on the one that plays closes it for a clean picture. BACK
+ * closes the panel, and BACK again leaves. [startPlaying] false waits for the first OK.
  *
- * [startPosition] says where to start an item (resume), [onProgress] reports where the user is.
+ * Movies and episodes: [startPosition] says where to start an item (resume), [onProgress] reports where
+ * the user is. Live: [onTuned] reports each channel that starts. Each defaults to doing nothing.
  */
 @OptIn(UnstableApi::class)
 @Composable
@@ -77,20 +76,19 @@ fun PlayerScreen(
     isLive: Boolean,
     startPlaying: Boolean,
     guide: Guide,
-    startPosition: suspend (Channel) -> Long,
-    onProgress: (Channel, positionMs: Long, durationMs: Long) -> Unit,
-    onTuned: (Channel) -> Unit,
     onExit: () -> Unit,
+    startPosition: suspend (Channel) -> Long = { 0L },
+    onProgress: (Channel, positionMs: Long, durationMs: Long) -> Unit = { _, _, _ -> },
+    onTuned: (Channel) -> Unit = {},
 ) {
     val context = LocalContext.current
     val player = remember { buildPlayer(context) }
     val zap = rememberZapState(groups, initialGroup, initialIndex)
     val controls = rememberControlsState()
-    val sidebar = remember { SidebarState() }
+    val panel = remember { PanelState(startOpen = isLive, group = initialGroup) }
     val nowMs = rememberNowMs()
     val channel = zap.channels[zap.loaded]
     var started by remember { mutableStateOf(startPlaying) }
-    var browsing by remember { mutableStateOf(isLive) } // live: lists and mini player, else full screen
 
     // State holders: they listen to the player and expose Compose state.
     val flags = rememberPlaybackFlags(player)
@@ -134,7 +132,6 @@ fun PlayerScreen(
     }
 
     LaunchedEffect(flags.ended) { if (flags.ended) playNext() }
-    LaunchedEffect(browsing) { if (!browsing) controls.showOverlay() } // full screen: show what plays
 
     // Load the zapped-to channel once the user stops pressing keys.
     LaunchedEffect(zap.pending) { zap.settle(beforeLoad = saveProgress) }
@@ -147,33 +144,39 @@ fun PlayerScreen(
         }
     }
     // App goes to the background (also TV standby): save and pause, so audio does not keep playing.
+    // Back in front, a live channel tunes in again (its old stream is stale); movies wait paused for OK.
+    var wasStopped by remember { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
         saveProgress()
         player.pause()
+        wasStopped = true
     }
-    // Later handlers win while enabled: sidebar closes first, then full screen returns to the lists.
+    LifecycleEventEffect(Lifecycle.Event.ON_START) {
+        if (wasStopped && isLive && started) retryToken++
+        wasStopped = false
+    }
+    // Declared after the exit handler, so it wins while the panel is open: BACK closes it first.
     BackHandler(onBack = onExit)
-    BackHandler(enabled = isLive && !browsing) { browsing = true }
-    BackHandler(enabled = sidebar.visible, onBack = sidebar::close)
+    BackHandler(enabled = panel.visible, onBack = panel::close)
 
     // Key presses go to whichever composable has focus. While an error shows, focus is on the Retry
-    // button (ErrorPanel asks for it); while the sidebar is open, on its rows (it asks for it);
-    // while the Live lists show, on their rows; otherwise it stays on the screen itself.
+    // button (ErrorPanel asks for it); while the panel is open, on its rows (it asks for it);
+    // otherwise it stays on the screen itself.
     val screenFocus = remember { FocusRequester() }
-    LaunchedEffect(error == null, sidebar.visible, browsing) {
-        if (error == null && !sidebar.visible && !browsing) screenFocus.requestFocus()
+    LaunchedEffect(error == null, panel.visible) {
+        if (error == null && !panel.visible) screenFocus.requestFocus()
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(if (browsing) Color.Transparent else Color.Black) // browsing: the app background shows
+            .background(Color.Black)
             .focusRequester(screenFocus)
             .focusable()
             .playerKeys(
                 isLive = isLive,
                 controlsEnabled = error == null,
-                listOpen = sidebar.visible || browsing,
+                listOpen = panel.visible,
                 nextEpisodeOffered = nextIndex != null && nearEnd,
                 onZap = {
                     zap.zap(it)
@@ -189,39 +192,18 @@ fun PlayerScreen(
                     controls.flashSkip((if (forward) "+" else "-") + (step / 1000) + " s", forward)
                 },
                 onShowInfo = controls::showOverlay,
-                onOpenSidebar = { sidebar.open(zap.group) },
+                onOpenPanel = { panel.open(zap.group) },
                 onNextEpisode = ::playNext,
             ),
     ) {
-        // One video view: only its frame changes between the mini player and full screen.
-        VideoFrame(mini = browsing) {
-            ContentFrame(player = player, modifier = Modifier.fillMaxSize())
-            if (browsing) MiniPlayerOverlay(channel.name, started, flags.buffering, failed = error != null)
-        }
+        ContentFrame(player = player, modifier = Modifier.fillMaxSize())
 
-        if (browsing) {
-            LiveBrowse(
-                groups = groups,
-                playingGroup = zap.group,
-                playingIndex = zap.loaded,
-                started = started,
-                guide = guide,
-                nowMs = nowMs,
-                onOpen = { group, index ->
-                    if (started && group == zap.group && index == zap.loaded) {
-                        browsing = false // OK on what plays: full screen
-                    } else {
-                        zap.select(group, index)
-                        started = true
-                    }
-                },
-            )
-        } else if (isLive) {
+        if (isLive) {
             val shown = zap.channels[zap.pending]
             val nowNext = guide.nowNext(shown.tvgId, nowMs)
-            // Shown on start, on zap and on UP, then fades out. The sidebar covers the same corner.
+            // Shown on start and on zap, then fades out. The panel covers the same corner.
             LiveChannelLabel(
-                visible = controls.overlayShown && !sidebar.visible,
+                visible = controls.overlayShown && !panel.visible,
                 name = shown.name,
                 now = nowNext?.now?.title,
                 next = nowNext?.next?.title,
@@ -241,7 +223,7 @@ fun PlayerScreen(
                 title = nextIndex?.let { zap.channels[it].name }.orEmpty(),
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 48.dp, bottom = 220.dp),
+                    .padding(end = Edge.X, bottom = 220.dp),
             )
             SkipIndicator(
                 visible = controls.skipVisible,
@@ -252,24 +234,39 @@ fun PlayerScreen(
             )
         }
 
-        ChannelSidebar(
-            state = sidebar,
+        ChannelPanel(
+            state = panel,
             groups = groups,
             playingGroup = zap.group,
             playingIndex = zap.pending,
+            started = started,
             guide = guide,
             nowMs = nowMs,
+            showGuide = isLive,
             onPick = { group, index ->
-                saveProgress()
-                zap.select(group, index)
-                sidebar.close()
+                if (isLive && started && group == zap.group && index == zap.loaded) {
+                    panel.close() // OK on what plays: a clean picture
+                } else {
+                    saveProgress()
+                    zap.select(group, index)
+                    started = true
+                    if (!isLive) panel.close() // movies and episodes: watch at once. Live: keep browsing.
+                }
             },
-            modifier = Modifier.align(Alignment.CenterStart),
         )
 
-        // The pill and the error panel sit mid-screen, where the sidebar's rows are: they wait for it to close.
-        if (flags.buffering && error == null && !sidebar.visible && !browsing) BufferingPill(Modifier.align(Alignment.Center))
-        if (error != null && !sidebar.visible && !browsing) {
+        // Nothing remembered to play yet: say what to do (the panel is open over this).
+        if (!started) {
+            Text(
+                text = "Pick a channel",
+                color = Color.White,
+                modifier = Modifier.align(Alignment.Center),
+            )
+        }
+
+        // The pill and the error panel sit mid-screen, between the panels: they wait for the panel to close.
+        if (flags.buffering && error == null && !panel.visible) BufferingPill(Modifier.align(Alignment.Center))
+        if (error != null && !panel.visible) {
             ErrorPanel(
                 code = error.errorCodeName,
                 onRetry = { retryToken++ },

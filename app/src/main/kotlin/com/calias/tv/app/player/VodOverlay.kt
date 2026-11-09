@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.calias.tv.app.ui.Edge
 import com.calias.tv.core.seek.Seek
 
 /**
@@ -50,7 +51,7 @@ fun VodOverlay(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.Black.copy(alpha = 0.65f))
-                .padding(horizontal = 48.dp, vertical = 32.dp),
+                .padding(horizontal = Edge.X, vertical = Edge.Y),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(text = title, color = Color.White, style = MaterialTheme.typography.titleLarge)

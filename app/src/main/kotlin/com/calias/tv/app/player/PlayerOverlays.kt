@@ -19,8 +19,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.Button
 import androidx.tv.material3.Text
+import com.calias.tv.app.ui.Edge
+import com.calias.tv.app.ui.Glass
+import com.calias.tv.app.ui.GlassButton
 
 // Small overlays drawn on top of the video. Fixed white-on-dark colors: they sit on video in
 // either theme.
@@ -32,7 +34,7 @@ import androidx.tv.material3.Text
 @Composable
 fun LiveChannelLabel(visible: Boolean, name: String, now: String?, next: String?, modifier: Modifier = Modifier) {
     AnimatedVisibility(visible = visible, modifier = modifier, enter = fadeIn(), exit = fadeOut()) {
-        Column(modifier = Modifier.padding(48.dp)) {
+        Column(modifier = Modifier.padding(horizontal = Edge.X, vertical = Edge.Y)) {
             Text(text = name, color = Color.White)
             if (now != null) Text(text = now, color = Color.White)
             if (next != null) Text(text = "Next: $next", color = Color.White.copy(alpha = 0.7f))
@@ -54,7 +56,7 @@ fun BufferingPill(modifier: Modifier = Modifier) {
 
 /**
  * Playback failed: the error code and a Retry button that takes focus, so OK works. The screen leaves
- * this panel out while the sidebar is open, so it takes focus again each time it comes back.
+ * this panel out while the browse panel is open, so it takes focus again each time it comes back.
  */
 @Composable
 fun ErrorPanel(code: String, onRetry: () -> Unit, modifier: Modifier = Modifier) {
@@ -69,9 +71,7 @@ fun ErrorPanel(code: String, onRetry: () -> Unit, modifier: Modifier = Modifier)
     ) {
         Text(text = "Playback failed", color = Color.White)
         Text(text = code, color = Color.White)
-        Button(onClick = onRetry, modifier = Modifier.focusRequester(retryFocus)) {
-            Text(text = "Retry")
-        }
+        GlassButton(text = "Retry", onClick = onRetry, modifier = Modifier.focusRequester(retryFocus), colors = Glass.overVideo)
         Text(text = "Down for the list, Back to leave", color = Color.White)
     }
 }

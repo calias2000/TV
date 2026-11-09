@@ -14,10 +14,15 @@ enum class AppFont(val label: String, val family: FontFamily) {
     MANROPE("Manrope", variable(R.font.manrope)),
     INTER("Inter", variable(R.font.inter)),
     FIGTREE("Figtree", variable(R.font.figtree)),
-    SYSTEM("System", FontFamily.Default),
+    SYSTEM("System", FontFamily.Default);
+
+    companion object {
+        val DEFAULT = MANROPE
+    }
 }
 
-private val WEIGHTS = listOf(FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold, FontWeight.Bold)
+// The app uses the regular and the medium weight only.
+private val WEIGHTS = listOf(FontWeight.Normal, FontWeight.Medium)
 
 private fun variable(resId: Int): FontFamily = FontFamily(
     WEIGHTS.map { weight ->
