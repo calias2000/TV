@@ -10,8 +10,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
-private const val CONNECT_TIMEOUT_MS = 15_000
+private val CONNECT_TIMEOUT = 15.seconds
 
 // The blocking request runs in a scope of its own, not in the caller's. The connection timeouts do not
 // cover the DNS lookup, which can hang for minutes on a bad network. This way the caller gives up after
@@ -20,16 +22,16 @@ private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
 /**
  * GET [url] and hand the response body to [read]. The whole request (lookup, connect, download and [read])
- * gets [timeoutMs]; after that it fails with a readable message ("Playlist server did not answer in time").
+ * gets [timeout]; after that it fails with a readable message ("Playlist server did not answer in time").
  * Also fails with ("[what] server answered HTTP 404") unless the answer is 200.
  * Used by the playlist and guide loaders.
  */
-internal suspend fun <T> httpGet(url: String, what: String, timeoutMs: Long, read: (InputStream) -> T): T {
+internal suspend fun <T> httpGet(url: String, what: String, timeout: Duration, read: (InputStream) -> T): T {
     val request = ioScope.async {
         val connection = URL(url).openConnection() as HttpURLConnection
         try {
-            connection.connectTimeout = CONNECT_TIMEOUT_MS
-            connection.readTimeout = timeoutMs.toInt()
+            connection.connectTimeout = CONNECT_TIMEOUT.inWholeMilliseconds.toInt()
+            connection.readTimeout = timeout.inWholeMilliseconds.toInt()
             val code = connection.responseCode
             check(code == HttpURLConnection.HTTP_OK) { "$what server answered HTTP $code" }
             connection.inputStream.buffered().use(read)
@@ -38,7 +40,7 @@ internal suspend fun <T> httpGet(url: String, what: String, timeoutMs: Long, rea
         }
     }
     try {
-        return withTimeout(timeoutMs) { request.await() }
+        return withTimeout(timeout) { request.await() }
     } catch (e: TimeoutCancellationException) {
         request.cancel()
         throw IOException("$what server did not answer in time", e)

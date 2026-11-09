@@ -39,26 +39,25 @@ fun GlassSurface(
     colors: GlassColors = Glass.colors,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val glass = colors
-    val text = glass.text
+    val text = colors.text
     Surface(
         onClick = onClick,
         modifier = modifier,
         shape = ClickableSurfaceDefaults.shape(shape),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = glass.fill,
+            containerColor = colors.fill,
             contentColor = text,
-            focusedContainerColor = glass.fillFocused,
+            focusedContainerColor = colors.fillFocused,
             focusedContentColor = text,
-            pressedContainerColor = glass.fillFocused,
+            pressedContainerColor = colors.fillFocused,
             pressedContentColor = text,
-            disabledContainerColor = glass.fill,
+            disabledContainerColor = colors.fill,
             disabledContentColor = text,
         ),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
         border = ClickableSurfaceDefaults.border(
-            border = Border(BorderStroke(1.dp, glass.edge), shape = shape),
-            focusedBorder = Border(BorderStroke(2.dp, glass.edgeFocused), shape = shape),
+            border = Border(BorderStroke(1.dp, colors.edge), shape = shape),
+            focusedBorder = Border(BorderStroke(2.dp, colors.edgeFocused), shape = shape),
         ),
         content = content,
     )
