@@ -11,9 +11,8 @@ import androidx.compose.ui.input.key.type
  * Remote-control keys of the player screen.
  *
  * Same convention as OwnTV: CH+ goes to the NEXT item, CH- to the PREVIOUS one (see Zap.step).
- * - Live: UP, DOWN, LEFT and RIGHT all open the browse panel. CH+/CH- zap (the channel header
- *   shows on a zap, since the panel is closed then).
- * - Movies and episodes: UP shows the title and the progress bar, DOWN opens the panel, LEFT/RIGHT
+ * - Live: UP, DOWN, LEFT and RIGHT all open the browse panel. CH+/CH- zap.
+ * - Movies and episodes: UP shows the bar and the play/pause icon, DOWN opens the panel, LEFT/RIGHT
  *   seek. OK pauses, or plays the next episode while the "Next episode" card is offered.
  *   CH+/CH- step to the previous/next item.
  * - Panel open ([listOpen]): it owns the D-pad and OK (they reach the focused row); channel keys still zap.
@@ -28,7 +27,7 @@ fun Modifier.playerKeys(
     onZap: (delta: Int) -> Unit,
     onTogglePlay: () -> Unit,
     onSkip: (forward: Boolean, repeatCount: Int) -> Unit,
-    onShowInfo: () -> Unit,
+    onShowControls: () -> Unit,
     onOpenPanel: () -> Unit,
     onNextEpisode: () -> Unit,
 ): Modifier = onPreviewKeyEvent { event ->
@@ -41,7 +40,7 @@ fun Modifier.playerKeys(
         Key.MediaPlayPause -> { onTogglePlay(); true }
         else -> when {
             listOpen -> false
-            event.key == Key.DirectionUp -> { if (isLive) onOpenPanel() else onShowInfo(); true }
+            event.key == Key.DirectionUp -> { if (isLive) onOpenPanel() else onShowControls(); true }
             event.key == Key.DirectionDown -> { onOpenPanel(); true }
             event.key == Key.DirectionCenter || event.key == Key.Enter ->
                 if (controls) { if (nextEpisodeOffered) onNextEpisode() else onTogglePlay(); true } else false

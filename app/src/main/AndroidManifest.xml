@@ -9,7 +9,7 @@
     <!-- A TV has no touchscreen, so this must not be required. -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
-    <!-- Allows plain http streams. Accepted for a personal TV on a home network (see decisions/08). -->
+    <!-- networkSecurityConfig allows plain http streams. Accepted for a personal TV on a home network (see decisions/08). -->
     <application
         android:label="TV"
         android:icon="@mipmap/ic_launcher"

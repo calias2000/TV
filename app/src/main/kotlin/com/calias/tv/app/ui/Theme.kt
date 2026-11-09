@@ -49,7 +49,7 @@ private val LightGlass = GlassColors(
     fill = Color.White.copy(alpha = 0.55f),
     fillFocused = Color.White.copy(alpha = 0.95f),
     edge = Color.Black.copy(alpha = 0.08f),
-    edgeFocused = Color(0xFF1565C0),
+    edgeFocused = Color.Black.copy(alpha = 0.65f),
     accent = Color(0xFF1E88E5), // also drawn over the dark scrim on video, so not too dark
     text = Color(0xFF10131A),
     textMuted = Color.Black.copy(alpha = 0.60f),

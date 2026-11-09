@@ -41,7 +41,7 @@ import com.calias.tv.core.seek.Seek
 import com.calias.tv.core.series.Episodes
 
 /** How long before the end the "Next episode" card appears. Our own starting value. */
-private const val NEXT_OFFER_MS = 30_000L
+private const val NEXT_OFFER_MS = 60_000L
 
 /**
  * Plays a channel, movie, or episode full screen. This file only wires things together; each part
@@ -51,13 +51,14 @@ private const val NEXT_OFFER_MS = 30_000L
  *   error and progress): the 2026 official way, instead of wrapping the old PlayerView.
  * - [ZapState]: which channel is shown and loaded, with the zap debounce.
  * - [PanelState] and [ChannelPanel]: the glass browse panels over the video.
- * - [ControlsState]: when the header, the progress bar and the skip flash show.
+ * - [ControlsState]: when the movie bar with the play/pause icon, and the skip flash, show.
  * - [playerKeys]: the remote-control keys.
- * - [VodOverlay], [LiveChannelLabel], [LoadingSpinner], [ErrorPanel]: what is drawn on the video.
+ * - [VodOverlay], [PlayPauseIcon], [NextEpisodeCard], [SkipIndicator], [LoadingSpinner], [ErrorPanel]: what is drawn on the video.
  *
  * Live ([isLive]): every arrow key opens the panel, channel keys zap. Movies and episodes: UP shows
- * the title and progress bar, DOWN opens the panel, OK pauses, left/right seek, channel keys step to
- * the previous or next item.
+ * the bar and the play/pause icon (BACK hides them, they stay while paused), DOWN opens the panel,
+ * OK pauses, left/right seek, channel keys step to the previous or next item. BACK on the
+ * "Next episode" card cancels the automatic start.
  * [groups] are what the panel browses (live categories, or one flat list).
  *
  * Live opens with the panel already open over the playing channel. Moving in it only browses. OK on a
@@ -84,7 +85,6 @@ fun PlayerScreen(
     val context = LocalContext.current
     val player = remember { buildPlayer(context) }
     val zap = rememberZapState(groups, initialGroup, initialIndex)
-    val controls = rememberControlsState()
     val panel = remember { PanelState(startOpen = isLive, group = initialGroup) }
     val nowMs = rememberNowMs()
     val channel = zap.channels[zap.loaded]
@@ -95,6 +95,7 @@ fun PlayerScreen(
     val error = rememberErrorState(player).error
     val progress = rememberProgressStateWithTickInterval(player, tickIntervalMs = 1_000)
     val paused = flags.paused
+    val controls = rememberControlsState(paused)
     // Next episode: offered during the last seconds, and started by itself when the episode ends.
     val nextIndex = remember(isLive, zap.group, zap.loaded) {
         if (isLive) null else Episodes.nextIndex(zap.channels, zap.loaded)
@@ -103,6 +104,9 @@ fun PlayerScreen(
         // derivedStateOf: the screen recomposes when this flips, not on every progress tick.
         derivedStateOf { progress.durationMs > 0 && progress.durationMs - progress.currentPositionMs <= NEXT_OFFER_MS }
     }
+    // BACK on the card keeps the user in this episode: no card, no automatic start.
+    var nextCancelled by remember(zap.group, zap.loaded) { mutableStateOf(false) }
+    val nextOffered = nextIndex != null && nearEnd && !nextCancelled
     // Bumped by the Retry button to start the same stream again.
     var retryToken by remember { mutableIntStateOf(0) }
 
@@ -128,10 +132,10 @@ fun PlayerScreen(
         player.setMediaItem(MediaItem.fromUri(channel.streamUrl), start)
         player.prepare()
         player.playWhenReady = true
-        controls.showOverlay()
+        controls.show()
     }
 
-    LaunchedEffect(flags.ended) { if (flags.ended) playNext() }
+    LaunchedEffect(flags.ended) { if (flags.ended && !nextCancelled) playNext() }
 
     // Load the zapped-to channel once the user stops pressing keys.
     LaunchedEffect(zap.pending) { zap.settle(beforeLoad = saveProgress) }
@@ -156,7 +160,11 @@ fun PlayerScreen(
         wasStopped = false
     }
     // Declared after the exit handler, so it wins while the panel is open: BACK closes it first.
+    // The movie bar and its icon, shown only when nothing else is in the way.
+    val controlsVisible = !isLive && controls.shown && !panel.visible && error == null
     BackHandler(onBack = onExit)
+    BackHandler(enabled = controlsVisible, onBack = controls::hide)
+    BackHandler(enabled = nextOffered, onBack = { nextCancelled = true })
     BackHandler(enabled = panel.visible, onBack = panel::close)
 
     // A failed stream closes the browse panel, so the error and its Retry button are in view.
@@ -180,50 +188,45 @@ fun PlayerScreen(
                 isLive = isLive,
                 controlsEnabled = error == null,
                 listOpen = panel.visible,
-                nextEpisodeOffered = nextIndex != null && nearEnd,
-                onZap = {
-                    zap.zap(it)
-                    controls.showOverlay() // show the header for the channel zapped to
-                },
+                nextEpisodeOffered = nextOffered,
+                onZap = { zap.zap(it) },
                 onTogglePlay = {
                     if (player.playWhenReady) player.pause() else player.play()
-                    controls.showOverlay()
+                    controls.show()
                 },
                 onSkip = { forward, repeatCount ->
                     val step = Seek.stepMs(repeatCount)
-                    player.seekTo(Seek.target(player.currentPosition, if (forward) step else -step, player.duration))
-                    controls.flashSkip((if (forward) "+" else "-") + (step / 1000) + " s", forward)
+                    val delta = if (forward) step else -step
+                    player.seekTo(Seek.target(player.currentPosition, delta, player.duration))
+                    controls.flashSkip(delta)
                 },
-                onShowInfo = controls::showOverlay,
+                onShowControls = controls::show,
                 onOpenPanel = { panel.open(zap.group) },
                 onNextEpisode = ::playNext,
             ),
     ) {
         ContentFrame(player = player, modifier = Modifier.fillMaxSize())
 
-        if (isLive) {
-            val shown = zap.channels[zap.pending]
-            val nowNext = guide.nowNext(shown.tvgId, nowMs)
-            // Shown on start and on zap, then fades out. The panel covers the same corner.
-            LiveChannelLabel(
-                visible = controls.overlayShown && !panel.visible,
-                name = shown.name,
-                now = nowNext?.now?.title,
-                next = nowNext?.next?.title,
-                modifier = Modifier.align(Alignment.TopStart),
-            )
-        } else {
+        if (!isLive) {
             VodOverlay(
-                visible = controls.overlayShown || paused,
+                visible = controlsVisible,
                 title = zap.channels[zap.pending].name,
                 positionMs = { progress.currentPositionMs },
                 durationMs = { progress.durationMs },
-                paused = paused,
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
+            // The spinner takes the middle while the player waits for data.
+            PlayPauseIcon(
+                visible = controlsVisible && !flags.buffering,
+                paused = paused,
+                modifier = Modifier.align(Alignment.Center),
+            )
             NextEpisodeCard(
-                visible = nextIndex != null && nearEnd,
+                visible = nextOffered,
                 title = nextIndex?.let { zap.channels[it].name }.orEmpty(),
+                remainingFraction = {
+                    ((progress.durationMs - progress.currentPositionMs).toFloat() / NEXT_OFFER_MS).coerceIn(0f, 1f)
+                },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(end = Edge.Margin, bottom = 220.dp),
@@ -272,7 +275,7 @@ fun PlayerScreen(
         if (flags.buffering && error == null) LoadingSpinner(Modifier.align(Alignment.Center))
         if (error != null && !panel.visible) {
             ErrorPanel(
-                code = error.errorCodeName,
+                error = error,
                 onRetry = { retryToken++ },
                 modifier = Modifier.align(Alignment.Center),
             )

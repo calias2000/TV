@@ -3,7 +3,7 @@ package com.calias.tv.core.zap
 /**
  * Channel zapping rules. Pure logic, no Android, so it is tested on the JVM.
  *
- * Convention (same as OwnTV): CH+ and D-pad up = next channel (+1), CH- and D-pad down = previous (-1).
+ * Convention (same as OwnTV): CH+ = next channel (+1), CH- = previous (-1).
  */
 object Zap {
 
