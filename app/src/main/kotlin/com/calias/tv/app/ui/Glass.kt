@@ -97,7 +97,7 @@ fun GlassIconButton(iconRes: Int, label: String, onClick: () -> Unit, modifier: 
 @Composable
 fun GlassPanel(
     modifier: Modifier = Modifier,
-    fill: Color = Color.Black.copy(alpha = 0.60f),
+    fill: Color = Color.Black.copy(alpha = 0.90f),
     edge: Color = Color.White.copy(alpha = 0.14f),
     content: @Composable BoxScope.() -> Unit,
 ) {
