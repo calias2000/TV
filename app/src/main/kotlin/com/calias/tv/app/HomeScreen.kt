@@ -53,7 +53,7 @@ import com.calias.tv.core.seek.Seek
  * Home: a quiet clock and three glass icon buttons on top, three glass tiles with counts, and a small
  * centered row under them that follows the tile in focus: recent live channels under Live TV, movies
  * you started under Movies, series you started under Series (hidden when there is nothing).
- * Status shows only while the playlist is loading or failed. Everything has to fit a 540 dp tall screen.
+ * Everything has to fit a 540 dp tall screen.
  *
  * Tiles stay dimmed until a playlist is loaded; when it loads, focus moves to the tile used last (the
  * first one on a fresh start). The background glows in the focused tile's color, or in the main color

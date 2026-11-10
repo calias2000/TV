@@ -14,7 +14,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 
-// Timing of the movie/episode controls and the skip flash. Our own starting values.
+// Timing of the movie/episode controls and the skip flash.
 private val CONTROLS_HIDE_DELAY = 4.seconds
 private val SKIP_FLASH = 700.milliseconds
 

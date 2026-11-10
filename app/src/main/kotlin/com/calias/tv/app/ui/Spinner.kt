@@ -20,8 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.LocalContentColor
 
 /**
- * The one loading indicator of the app: a spinning arc. Wherever something loads (the stream, the
- * playlist) this is shown, never a word. Pick the [diameter] for the place: big in the middle of the
+ * The loading indicator: a spinning arc. Pick the [diameter] for the place: big in the middle of the
  * screen, small inside a line or a badge.
  */
 @Composable

@@ -38,13 +38,6 @@ import com.calias.tv.app.ui.fadeEdges
 /** A mid-dark "picture" behind the subtitle preview, so the dark subtitle glass shows against it. */
 private val PREVIEW_PICTURE = Color(0xFF3B424D)
 
-/** What the playlist state says, for Settings and for Home's status pill. Null while loading: a spinner shows then. */
-internal fun statusText(state: PlaylistState): String? = when (state) {
-    PlaylistState.Loading -> null
-    is PlaylistState.Loaded -> "Playlist loaded: ${state.playlist.channels.size} entries"
-    is PlaylistState.Failed -> "Playlist unavailable: ${state.message}. Press Sync to retry."
-}
-
 /**
  * Settings: glass sections for the playlist (source, status, sync), the font, and the subtitle size with
  * a live preview. The sections scroll when they do not fit the screen.

@@ -8,13 +8,11 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 
 /**
- * Remote-control keys of the player screen.
- *
- * Same convention as OwnTV: CH+ goes to the NEXT item, CH- to the PREVIOUS one (see Zap.step).
+ * Remote-control keys of the player screen. CH+ goes to the next item, CH- to the previous one.
  * - Live: UP, DOWN, LEFT and RIGHT all open the browse panel. CH+/CH- zap.
- * - Movies and episodes: UP shows the bar and the play/pause icon, DOWN opens the panel (while the bar
- *   shows, the bar takes DOWN and the keys after it: [onBarKey]), LEFT/RIGHT seek. OK pauses, or plays the next episode while the "Next episode" card is offered.
- *   CH+/CH- step to the previous/next item.
+ * - Movies and episodes: UP shows the bar, DOWN opens the panel (while the bar shows, the bar takes DOWN
+ *   and the keys after it: [onBarKey]), LEFT/RIGHT seek. OK pauses, or plays the next episode while the
+ *   "Next episode" card is offered. CH+/CH- step to the previous/next item.
  * - Panel open ([listOpen]): it owns the D-pad and OK (they reach the focused row); channel keys still zap.
  * - Error showing ([controlsEnabled] false): LEFT/RIGHT/OK reach the Retry button, DOWN still
  *   opens the panel, so a dead channel can be left without channel keys.

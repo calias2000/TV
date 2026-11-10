@@ -15,7 +15,7 @@ import kotlinx.coroutines.delay
 /**
  * How long to wait after the last channel key before loading the stream. Several quick key presses
  * then cost one connection, not one per press. The channel name still updates on every press.
- * Our own starting value, not taken from a reference app. Tune on the real TV.
+ * Tune on the real TV.
  */
 private val ZAP_DEBOUNCE = 400.milliseconds
 

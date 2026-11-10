@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 
-/** The subtitle sizes the user can pick in Settings, in sp. [MEDIUM] is what the app started with. */
+/** The subtitle sizes the user can pick in Settings, in sp. */
 enum class SubtitleSize(val label: String, val sp: Int) {
     SMALL("Small", 20),
     MEDIUM("Medium", 24),

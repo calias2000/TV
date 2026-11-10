@@ -34,8 +34,8 @@ import com.calias.tv.core.seek.Seek
 
 /**
  * The bar for movies and episodes, a glass panel floating at the bottom: title, a progress bar that
- * glides to each new position, and elapsed / total time. It slides up and fades in, and slides down
- * and fades out. White on dark glass, because it sits on top of video in either theme.
+ * glides to each new position, and elapsed / total time. White on dark glass, because it sits on
+ * top of video in either theme.
  */
 @Composable
 fun VodOverlay(

@@ -18,7 +18,7 @@ data class Category(val name: String, val channels: List<Channel>)
  * Splits the flat playlist into the three browsable sections.
  *
  * Live channels are grouped by their `group-title`, in the order the playlist first mentions each
- * group. Movies and series stay flat, in playlist order. Pure logic, no Android.
+ * group. Movies and series stay flat, in playlist order.
  */
 object Library {
 

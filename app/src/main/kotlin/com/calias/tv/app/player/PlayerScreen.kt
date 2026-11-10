@@ -23,6 +23,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -40,33 +41,38 @@ import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.library.Category
 import com.calias.tv.core.seek.Seek
 import com.calias.tv.core.series.Episodes
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 
-/** How long before the end the "Next episode" card appears. Our own starting value. */
+/** How long before the end the "Next episode" card appears. */
 private const val NEXT_OFFER_MS = 60_000L
+
+/** A live stream that played this long without dropping counts as steady: the retries start over. */
+private val STEADY_AFTER = 10.seconds
 
 /**
  * Plays a channel, movie, or episode full screen. This file only wires things together; each part
  * lives in its own file:
- * - [buildPlayer]: the ExoPlayer engine and its configuration.
- * - Media3's Compose UI module ([ContentFrame] for the video, state holders for playback state,
- *   error and progress): the 2026 official way, instead of wrapping the old PlayerView.
+ * - [buildPlayer]: the ExoPlayer and its configuration.
+ * - Media3's Compose UI module: [ContentFrame] for the video, state holders for error and progress.
  * - [ZapState]: which channel is shown and loaded, with the zap debounce.
  * - [PanelState] and [ChannelPanel]: the glass browse panels over the video.
- * - [ControlsState]: when the movie bar with the play/pause icon, and the skip flash, show, and which
- *   of its Audio / Subtitles buttons is highlighted.
+ * - [ControlsState]: when the movie bar and the skip flash show, and which of the bar's Audio and
+ *   Subtitles buttons is highlighted.
  * - [TracksState] and [TrackMenuCard]: the audio and subtitle tracks of the file, and the card to pick one.
  * - [playerKeys]: the remote-control keys.
- * - [VodOverlay], [PlayPauseIcon], [NextEpisodeCard], [SkipIndicator], [LoadingSpinner], [ErrorPanel]: what is drawn on the video.
+ * - [VodOverlay], [PlayPauseIcon], [NextEpisodeCard], [SkipIndicator], [LoadingSpinner], [ErrorPanel]:
+ *   what is drawn on the video.
  *
- * Live ([isLive]): every arrow key opens the panel, channel keys zap. Movies and episodes: UP shows
- * the bar and the play/pause icon (BACK hides them, they stay while paused), DOWN opens the panel
- * (with the bar showing, DOWN highlights its Audio and Subtitles buttons instead), OK pauses, left/right seek, channel keys step to the previous or next item. BACK on the
- * "Next episode" card cancels the automatic start.
+ * Live ([isLive]) opens with the panel already open over the playing channel; every arrow key opens it
+ * and channel keys zap. Moving in the panel only browses: OK on a channel plays it and keeps the panel,
+ * OK on the one that plays closes it for a clean picture. [startPlaying] false waits for the first OK.
+ * Movies and episodes: UP shows the bar (it stays while paused), DOWN opens the panel (with the bar
+ * showing, DOWN highlights its Audio and Subtitles buttons instead), OK pauses, left/right seek, channel
+ * keys step to the previous or next item.
+ *
+ * BACK steps back one layer: the card, the panel, the next-episode offer, the bar, and then it leaves.
  * [groups] are what the panel browses (live categories, or one flat list).
- *
- * Live opens with the panel already open over the playing channel. Moving in it only browses. OK on a
- * channel plays it and keeps the panel, OK on the one that plays closes it for a clean picture. BACK
- * closes the panel, and BACK again leaves. [startPlaying] false waits for the first OK.
  *
  * Movies and episodes: [startPosition] says where to start an item (resume), [onProgress] reports where
  * the user is, [subtitleSize] is the size of the subtitles. Live: [onTuned] reports each channel that
@@ -113,8 +119,16 @@ fun PlayerScreen(
     // BACK on the card keeps the user in this episode: no card, no automatic start.
     var nextCancelled by remember(zap.group, zap.loaded) { mutableStateOf(false) }
     val nextOffered = nextIndex != null && nearEnd && !nextCancelled
-    // Bumped by the Retry button to start the same stream again.
+    // Bumped to start the same stream again: by the Retry button, and by the live retries below.
     var retryToken by remember { mutableIntStateOf(0) }
+
+    // Live: a dropped stream (closed by the provider, or a failure) is tuned in again by itself, a few
+    // times, before the failure is shown. Movies and episodes show a failure at once.
+    val retry = remember(channel.streamUrl) { LiveRetry() }
+    val failure = remember(error, flags.ended, isLive) { error?.let(Failure::of) ?: Failure.ENDED.takeIf { isLive && flags.ended } }
+    val reconnecting = isLive && failure != null && !retry.exhausted
+    val shownFailure = failure.takeUnless { reconnecting }
+    val showFailure = shownFailure != null
 
     // Remember where a movie or episode is, so it can resume later. Only once the length is known,
     // so leaving while the stream is still loading cannot erase an earlier record.
@@ -153,6 +167,12 @@ fun PlayerScreen(
             player.release()
         }
     }
+    // The TV screen saver must not start while something plays (Media3 recommends keepScreenOn for video).
+    val view = LocalView.current
+    DisposableEffect(view, paused) {
+        view.keepScreenOn = !paused
+        onDispose { view.keepScreenOn = false }
+    }
     // App goes to the background (also TV standby): save and pause, so audio does not keep playing.
     // Back in front, a live channel tunes in again (its old stream is stale); movies wait paused for OK.
     var wasStopped by remember { mutableStateOf(false) }
@@ -165,9 +185,21 @@ fun PlayerScreen(
         if (wasStopped && isLive && started) retryToken++
         wasStopped = false
     }
+    // Not while the app is in the background: tuning in again would start the sound there.
+    LaunchedEffect(retry, failure) {
+        if (isLive && started && failure != null && !wasStopped) retry.onDrop { if (!wasStopped) retryToken++ }
+    }
+    // Steady for a while: the next drop starts again from the shortest wait.
+    val steady = started && !flags.buffering && failure == null
+    LaunchedEffect(retry, steady) {
+        if (steady) {
+            delay(STEADY_AFTER)
+            retry.reset()
+        }
+    }
     // The movie bar and its icon, shown only when nothing else is in the way. An open Audio/Subtitles card
     // takes their place, and they come back when it closes.
-    val controlsVisible = !isLive && controls.shown && !panel.visible && !controls.menuOpen && error == null
+    val controlsVisible = !isLive && controls.shown && !panel.visible && !controls.menuOpen && !showFailure
     // Each handler is declared after the ones it must win over: BACK closes the card first, then the
     // panel, then cancels the next-episode offer, then hides the bar, and only then leaves.
     BackHandler(onBack = onExit)
@@ -178,8 +210,8 @@ fun PlayerScreen(
 
     // A failed stream closes the browse panel and the movie bar with its card, so the error and its Retry
     // button are in view and nothing else holds focus.
-    LaunchedEffect(error) {
-        if (error != null) {
+    LaunchedEffect(showFailure) {
+        if (showFailure) {
             panel.close()
             controls.hide()
         }
@@ -189,8 +221,8 @@ fun PlayerScreen(
     // button (ErrorPanel asks for it); while the panel is open, on its rows (it asks for it);
     // otherwise it stays on the screen itself.
     val screenFocus = remember { FocusRequester() }
-    LaunchedEffect(error == null, panel.visible, controls.menuOpen) {
-        if (error == null && !panel.visible && !controls.menuOpen) screenFocus.requestFocus()
+    LaunchedEffect(showFailure, panel.visible, controls.menuOpen) {
+        if (!showFailure && !panel.visible && !controls.menuOpen) screenFocus.requestFocus()
     }
 
     Box(
@@ -201,7 +233,7 @@ fun PlayerScreen(
             .focusable()
             .playerKeys(
                 isLive = isLive,
-                controlsEnabled = error == null,
+                controlsEnabled = !showFailure,
                 listOpen = panel.visible || controls.menuOpen,
                 barOpen = controlsVisible,
                 nextEpisodeOffered = nextOffered,
@@ -306,11 +338,14 @@ fun PlayerScreen(
 
         // Mid-screen, between the two cards, so it shows with the panel open too. The error panel needs focus
         // for its Retry button, so it waits for the panel to close (an error closes the panel, see above).
-        if (flags.buffering && error == null) LoadingSpinner(Modifier.align(Alignment.Center))
-        if (error != null && !panel.visible) {
+        if (!showFailure && (flags.buffering || reconnecting)) LoadingSpinner(Modifier.align(Alignment.Center))
+        if (shownFailure != null && !panel.visible) {
             ErrorPanel(
-                error = error,
-                onRetry = { retryToken++ },
+                failure = shownFailure,
+                onRetry = {
+                    retry.reset()
+                    retryToken++
+                },
                 modifier = Modifier.align(Alignment.Center),
             )
         }

@@ -13,7 +13,7 @@ data class ContinueItem(val channel: Channel, val positionMs: Long)
 /**
  * Remembers where the user stopped watching. One record per movie and one per series (the last
  * episode watched). Keyed by title, not by channel id, because ids are playlist positions and
- * change whenever the playlist changes. Pure logic, no Android.
+ * change whenever the playlist changes.
  */
 object Resume {
 

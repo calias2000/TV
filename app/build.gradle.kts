@@ -26,10 +26,20 @@ android {
         disable += "IconMissingDensityFolder"
     }
 
+    testOptions {
+        unitTests {
+            // Robolectric needs the app resources (fonts, drawables) to draw screens in a JVM test.
+            isIncludeAndroidResources = true
+            all {
+                // Robolectric reaches into JDK internals that recent JDKs (24+) close by default.
+                it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED", "--enable-native-access=ALL-UNNAMED")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // App optimization (AGP 9.3+ DSL, per official docs): R8 removes unused code AND unused
-            // resources, and rewrites code for speed. Debug builds skip this on purpose.
+            // R8: removes unused code and resources and rewrites code for speed. Debug builds skip it on purpose.
             optimization {
                 enable = true
             }
@@ -62,4 +72,12 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+
+    // Screen and state tests run on the JVM (Robolectric), with fake data: no device, no network.
+    testImplementation(libs.junit)
+    testImplementation(kotlin("test"))
+    testImplementation(libs.robolectric)
+    testImplementation(libs.coroutines.test)
+    testImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
 }

@@ -89,21 +89,30 @@ fun SubtitleText(text: String, size: SubtitleSize, raised: Boolean, modifier: Mo
     SubtitleLine(text = text, size = size, modifier = modifier.padding(bottom = bottom))
 }
 
-/** What went wrong, in words for the family. The Media3 code name stays visible below it for us. */
-private fun message(error: PlaybackException) = when (error.errorCode) {
-    PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
-    PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT -> "Can't reach the stream"
-    PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS,
-    PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND -> "Stream not available"
-    else -> "Playback failed"
+/** What to tell the user when playback stops: a message in words, and the Media3 code name below it, if any. */
+class Failure(val message: String, val code: String?) {
+    companion object {
+        /** A live stream that was closed and could not be tuned in again. */
+        val ENDED = Failure("The stream ended", code = null)
+
+        fun of(error: PlaybackException) = Failure(
+            message = when (error.errorCode) {
+                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT -> "Can't reach the stream"
+                PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS,
+                PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND -> "Stream not available"
+                else -> "Playback failed"
+            },
+            code = error.errorCodeName,
+        )
+    }
 }
 
 /**
- * Playback failed: a message and a Retry button that takes focus, so OK works. The screen leaves
- * this panel out while the browse panel is open (an error closes that panel by itself), so it takes focus again each time it comes back.
+ * Playback failed: a message and a Retry button that takes focus, so OK works.
  */
 @Composable
-fun ErrorPanel(error: PlaybackException, onRetry: () -> Unit, modifier: Modifier = Modifier) {
+fun ErrorPanel(failure: Failure, onRetry: () -> Unit, modifier: Modifier = Modifier) {
     val retryFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { retryFocus.requestFocus() }
     GlassPanel(modifier) {
@@ -112,8 +121,8 @@ fun ErrorPanel(error: PlaybackException, onRetry: () -> Unit, modifier: Modifier
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(text = message(error), color = Color.White, style = MaterialTheme.typography.titleLarge)
-            Text(text = error.errorCodeName, color = Color.White.copy(alpha = 0.6f), style = MaterialTheme.typography.bodySmall)
+            Text(text = failure.message, color = Color.White, style = MaterialTheme.typography.titleLarge)
+            failure.code?.let { Text(text = it, color = Color.White.copy(alpha = 0.6f), style = MaterialTheme.typography.bodySmall) }
             GlassButton(text = "Retry", onClick = onRetry, modifier = Modifier.focusRequester(retryFocus), colors = Glass.overVideo)
             Text(text = "Back to leave", color = Color.White.copy(alpha = 0.6f))
         }
@@ -121,7 +130,7 @@ fun ErrorPanel(error: PlaybackException, onRetry: () -> Unit, modifier: Modifier
 }
 
 /**
- * "Next episode" offer, bottom-right, shown near the end of an episode (like Netflix). OK plays it
+ * "Next episode" offer, bottom-right, shown near the end of an episode. OK plays it
  * at once, BACK cancels it, and if the episode just ends the next one starts by itself. The bar
  * counts down: [remainingFraction] goes from 1 to 0 over the offer.
  */

@@ -1,7 +1,7 @@
 package com.calias.tv.core.seek
 
 /**
- * Seeking rules for movies and episodes. Pure logic, no Android, tested on the JVM.
+ * Seeking rules for movies and episodes.
  * Times are in milliseconds, the unit Media3 uses.
  */
 object Seek {

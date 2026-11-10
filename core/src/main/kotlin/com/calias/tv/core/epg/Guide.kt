@@ -14,7 +14,7 @@ data class NowNext(val now: Program?, val next: Program?)
 /**
  * The TV guide: programs per EPG channel id (the playlist's `tvg-id`). Several playlist entries
  * can share one id (for example the HD and 4K variants of a channel): each entry is still its own
- * row, they just look up the same guide data. Pure logic, no Android.
+ * row, they just look up the same guide data.
  */
 class Guide(private val byChannel: Map<String, List<Program>>) {
 

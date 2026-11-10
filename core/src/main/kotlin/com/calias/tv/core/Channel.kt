@@ -2,7 +2,6 @@ package com.calias.tv.core
 
 /**
  * One entry read from a playlist: a live channel, a movie, or a series episode.
- * Plain data: no Android types, so it can be tested on the JVM.
  */
 data class Channel(
     val id: String,

@@ -6,7 +6,7 @@ import kotlin.math.min
 /**
  * Finds the main color of a small picture, for the tinted backdrop. Grays, near-black and near-white
  * pixels do not count (a poster's dark frame is not its color); the rest are averaged, with the more
- * saturated and brighter pixels counting more. Pure logic, no Android.
+ * saturated and brighter pixels counting more.
  */
 object Dominant {
 

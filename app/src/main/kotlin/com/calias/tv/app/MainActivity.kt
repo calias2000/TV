@@ -19,10 +19,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val prefs: PrefsViewModel = viewModel()
-            // Dark or light and the font, remembered between runs. Nothing is drawn until they are read.
+            // Theme, font and subtitle size, remembered between runs. Nothing is drawn until they are read.
             val look = prefs.look.collectAsStateWithLifecycle().value ?: return@setContent
             AppTheme(dark = look.dark, font = look.font) {
-                // One shared background behind every screen.
                 AppBackground {
                     val viewModel: PlaylistViewModel = viewModel()
                     // While the app is in front, keep the guide up to date (it also runs again on every return).

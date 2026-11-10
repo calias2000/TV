@@ -5,7 +5,7 @@ import com.calias.tv.core.ContentKind
 
 /**
  * The live channels played most recently, newest first, as stream URLs (stable, unlike list
- * positions). Pure logic, no Android.
+ * positions).
  */
 object Recents {
 

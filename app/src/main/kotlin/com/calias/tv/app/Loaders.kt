@@ -1,11 +1,24 @@
-package com.calias.tv.app.epg
+package com.calias.tv.app
 
 import android.util.Xml
-import com.calias.tv.app.httpGet
 import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.epg.Xmltv
+import com.calias.tv.core.playlist.M3uParser
+import com.calias.tv.core.playlist.Playlist
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
+
+/** Downloads the playlist text over HTTPS and parses it with the core parser. */
+object PlaylistLoader {
+
+    const val PLAYLIST_URL = "https://calias.me/api/iptv/live/2"
+
+    private val TIMEOUT = 20.seconds
+
+    suspend fun load(): Playlist = httpGet(PLAYLIST_URL, "Playlist", TIMEOUT) { stream ->
+        M3uParser.parse(stream.bufferedReader(Charsets.UTF_8).readText())
+    }
+}
 
 /**
  * Downloads the XMLTV guide and parses it while it streams in. Keeps only the programs of

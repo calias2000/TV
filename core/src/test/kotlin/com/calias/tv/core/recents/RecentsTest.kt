@@ -4,6 +4,7 @@ import com.calias.tv.core.Channel
 import com.calias.tv.core.ContentKind
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class RecentsTest {
 
@@ -27,6 +28,6 @@ class RecentsTest {
     fun `encode and decode round trip`() {
         val list = listOf("http://x/1", "http://x/2")
         assertEquals(list, Recents.decode(Recents.encode(list)))
-        assertEquals(emptyList(), Recents.decode(""))
+        assertTrue(Recents.decode("").isEmpty())
     }
 }

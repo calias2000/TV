@@ -65,7 +65,7 @@ object Edge {
     val Margin = 32.dp
 }
 
-/** The backdrop color of each Home section. Our own picks: change them here. */
+/** The backdrop color of each Home section. */
 object SectionTint {
     val Live = Color(0xFF2E7BFF)
     val Movies = Color(0xFFFF7A45)

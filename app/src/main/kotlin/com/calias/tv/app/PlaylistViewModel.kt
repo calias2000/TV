@@ -2,7 +2,6 @@ package com.calias.tv.app
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.calias.tv.app.epg.EpgLoader
 import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.playlist.Playlist
 import kotlinx.coroutines.Job
@@ -21,6 +20,13 @@ sealed interface PlaylistState {
     data object Loading : PlaylistState
     data class Loaded(val playlist: Playlist) : PlaylistState
     data class Failed(val message: String) : PlaylistState
+}
+
+/** What the playlist state says, for Settings and for Home's status pill. Null while loading: a spinner shows then. */
+internal fun statusText(state: PlaylistState): String? = when (state) {
+    PlaylistState.Loading -> null
+    is PlaylistState.Loaded -> "Playlist loaded: ${state.playlist.channels.size} entries"
+    is PlaylistState.Failed -> "Playlist unavailable: ${state.message}. Press Sync to retry."
 }
 
 /**

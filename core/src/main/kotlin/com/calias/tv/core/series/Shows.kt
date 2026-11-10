@@ -11,7 +11,7 @@ data class Show(val name: String, val episodes: List<Channel>) {
 
 /**
  * Episode titles look like "Show Name (2011) (US) - S01E01 - Pilot". The playlist has no season or
- * show data, so the show and the episode are read from the title. Pure logic, no Android.
+ * show data, so the show and the episode are read from the title.
  */
 object Shows {
 

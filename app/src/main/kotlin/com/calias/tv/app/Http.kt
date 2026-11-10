@@ -3,6 +3,7 @@ package com.calias.tv.app
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
 import java.net.URL
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,6 +44,9 @@ internal suspend fun <T> httpGet(url: String, what: String, timeout: Duration, r
         return withTimeout(timeout) { request.await() }
     } catch (e: TimeoutCancellationException) {
         request.cancel()
+        throw IOException("$what server did not answer in time", e)
+    } catch (e: SocketTimeoutException) {
+        // The connection's own read timer can run out just before the budget does: same message.
         throw IOException("$what server did not answer in time", e)
     }
 }

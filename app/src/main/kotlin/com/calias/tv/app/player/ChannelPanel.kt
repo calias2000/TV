@@ -46,7 +46,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
-/** How long the cursor must rest on a channel before the guide card shows that channel. Our own value. */
+/** How long the cursor must rest on a channel before the guide card shows that channel. */
 private val GUIDE_DELAY = 150.milliseconds
 
 /**
@@ -57,7 +57,8 @@ private val GUIDE_DELAY = 150.milliseconds
  * Level CHANNELS lists the browsed group, level GROUPS lists all groups (live only).
  * UP/DOWN move, OK picks. LEFT goes from the channels to the groups. RIGHT goes from the groups back
  * to the channels, and from the channels into the guide card, where UP/DOWN scroll the day and LEFT
- * returns to the channels. BACK (handled by the caller) closes the panel.
+ * returns to the channels. BACK in the guide card goes back to the channels (LEFT does the same); elsewhere
+ * the caller's BACK closes the panel.
  * Moving only browses, nothing starts: the guide follows the cursor, the picture stays on [playingIndex].
  * Fixed light-on-dark colors: it sits on video, in either theme.
  */

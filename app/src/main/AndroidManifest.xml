@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android app description. The leanback entries below mark this as an Android TV app. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
@@ -10,7 +9,7 @@
     <!-- A TV has no touchscreen, so this must not be required. -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
-    <!-- networkSecurityConfig allows plain http streams. Accepted for a personal TV on a home network (see decisions/08). -->
+    <!-- Plain http streams are allowed on purpose: the reason is in res/xml/network_security_config.xml. -->
     <!-- enableOnBackInvokedCallback: Android 13+ hands BACK to the app through the platform back dispatcher. -->
     <application
         android:enableOnBackInvokedCallback="true"

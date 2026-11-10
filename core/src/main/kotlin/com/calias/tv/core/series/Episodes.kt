@@ -4,7 +4,7 @@ import com.calias.tv.core.Channel
 import com.calias.tv.core.ContentKind
 import com.calias.tv.core.resume.Resume
 
-/** Episode order inside the flat series list. Pure logic, no Android. */
+/** Episode order inside the flat series list. */
 object Episodes {
 
     /**

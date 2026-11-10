@@ -86,7 +86,7 @@ fun rememberTracksState(player: Player): TracksState {
 }
 
 /** The tracks of [type] in [tracks], named by language. A language used twice gets a number ("Spanish", "Spanish 2"). */
-private fun options(tracks: Tracks, type: Int): List<TrackOption> {
+internal fun options(tracks: Tracks, type: Int): List<TrackOption> {
     val seen = HashMap<String, Int>()
     return tracks.groups.filter { it.type == type }.flatMap { group ->
         (0 until group.length).map { index ->
