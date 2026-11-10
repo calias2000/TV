@@ -60,6 +60,9 @@ dependencies {
     implementation(libs.tv.material)
 
     implementation(libs.media3.exoplayer)
+    // Format modules: ExoPlayer plays plain streams alone; HLS (.m3u8) and DASH (.mpd) need their own module.
+    implementation(libs.media3.exoplayer.hls)
+    implementation(libs.media3.exoplayer.dash)
     implementation(libs.media3.ui.compose)
 
     implementation(libs.lifecycle.viewmodel.compose)
