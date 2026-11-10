@@ -2,7 +2,7 @@ package com.calias.tv.app
 
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import com.calias.tv.app.ui.AppFont
 import com.calias.tv.app.ui.AppTheme

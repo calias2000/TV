@@ -26,7 +26,7 @@ fun ProgressBar(fraction: Float, modifier: Modifier = Modifier, height: Dp = 3.d
         modifier = modifier
             .fillMaxWidth()
             .height(height)
-            .clip(RoundedCornerShape(50))
+            .clip(RoundedCornerShape(50)) // a thin bar is round by nature: its radius is half its height
             .background(if (onVideo) Color.White.copy(alpha = 0.3f) else Color.Gray.copy(alpha = 0.4f)),
     ) {
         Box(

@@ -2,7 +2,8 @@ package com.calias.tv.app
 
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import com.calias.tv.app.ui.AppFont
 import com.calias.tv.app.ui.AppTheme
@@ -29,6 +30,7 @@ class HomeScreenTest {
     private val recent = Channel("c1", "Channel One", "http://x/c1", group = null)
     private val loaded = PlaylistState.Loaded(Playlist(epgUrl = null, channels = listOf(recent)))
     private var opened: Any? = null
+    private var profilesOpened = 0
 
     private fun home(state: PlaylistState, counts: Counts?, recentLive: List<Channel> = listOf(recent)) = compose.setContent {
         AppTheme(dark = true, font = AppFont.SYSTEM) {
@@ -41,6 +43,7 @@ class HomeScreenTest {
                 onResume = {},
                 onRecentLive = {},
                 onOpen = { opened = it },
+                onProfiles = { profilesOpened++ },
                 onSync = {},
                 onToggleTheme = {},
             )
@@ -72,6 +75,13 @@ class HomeScreenTest {
         compose.press(Key.DirectionRight)
         compose.press(Key.DirectionCenter)
         assertEquals(SeriesList, opened)
+    }
+
+    @Test
+    fun `the profile button asks for the list of profiles`() {
+        home(loaded, Counts(1, 0, 0))
+        compose.onNodeWithContentDescription("Profiles").focusAndPressOk(compose)
+        assertEquals(1, profilesOpened)
     }
 
     @Test

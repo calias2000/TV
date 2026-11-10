@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.calias.tv.app.ui.Corner
 import com.calias.tv.app.ui.Edge
 import com.calias.tv.app.ui.Glass
 import com.calias.tv.app.ui.GlassIconButton
@@ -40,6 +41,7 @@ import com.calias.tv.app.ui.GlassSurface
 import com.calias.tv.app.ui.LocalBackdrop
 import com.calias.tv.app.ui.ProgressBar
 import com.calias.tv.app.ui.SectionTint
+import com.calias.tv.app.ui.Space
 import com.calias.tv.app.ui.Spinner
 import com.calias.tv.app.ui.PictureGlow
 import com.calias.tv.core.Channel
@@ -50,7 +52,7 @@ import com.calias.tv.core.resume.ContinueItem
 import com.calias.tv.core.seek.Seek
 
 /**
- * Home: a quiet clock and three glass icon buttons on top, three glass tiles with counts, and a small
+ * Home: a quiet clock and four glass icon buttons on top (profiles, sync, settings, theme), three glass tiles with counts, and a small
  * centered row under them that follows the tile in focus: recent live channels under Live TV, movies
  * you started under Movies, series you started under Series (hidden when there is nothing).
  * Everything has to fit a 540 dp tall screen.
@@ -69,6 +71,7 @@ fun HomeScreen(
     onResume: (ContinueItem) -> Unit,
     onRecentLive: (Channel) -> Unit,
     onOpen: (Any) -> Unit,
+    onProfiles: () -> Unit,
     onSync: () -> Unit,
     onToggleTheme: () -> Unit,
 ) {
@@ -103,10 +106,11 @@ fun HomeScreen(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = Edge.Margin),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(Space.Gap),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Clock(nowMs, modifier = Modifier.weight(1f))
+                GlassIconButton(R.drawable.ic_profile, "Profiles", onProfiles)
                 GlassIconButton(R.drawable.ic_sync, "Sync", onSync)
                 GlassIconButton(R.drawable.ic_settings, "Settings", { onOpen(Settings) })
                 GlassIconButton(R.drawable.ic_theme, "Switch theme", onToggleTheme)
@@ -189,7 +193,7 @@ private class CardSpec(val channel: Channel, val subtitle: String?, val progress
 
 /** The time, large and light, like a TV launcher. [nowMs] comes from [rememberNowMs]. */
 @Composable
-private fun Clock(nowMs: Long, modifier: Modifier = Modifier) {
+internal fun Clock(nowMs: Long, modifier: Modifier = Modifier) {
     Text(
         text = formatTime(nowMs),
         style = MaterialTheme.typography.displaySmall,
@@ -211,7 +215,7 @@ private fun HomeTile(label: String, count: String?, ready: Boolean, modifier: Mo
             .focusProperties { canFocus = ready },
     ) {
         Column(
-            modifier = Modifier.padding(24.dp).align(Alignment.BottomStart),
+            modifier = Modifier.padding(Space.Inner).align(Alignment.BottomStart),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(text = label, style = MaterialTheme.typography.headlineMedium)
@@ -230,7 +234,11 @@ private fun HomeTile(label: String, count: String?, ready: Boolean, modifier: Mo
 private fun ContinueCard(card: CardSpec, fallbackTint: Color) {
     var focused by remember { mutableStateOf(false) }
     PictureGlow(focused, card.channel.logo, fallbackTint)
-    GlassSurface(onClick = card.onClick, modifier = Modifier.width(260.dp).onFocusChanged { focused = it.hasFocus }) {
+    GlassSurface(
+        onClick = card.onClick,
+        modifier = Modifier.width(260.dp).onFocusChanged { focused = it.hasFocus },
+        shape = Corner.Medium,
+    ) {
         Row(
             modifier = Modifier.padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -262,7 +270,7 @@ private fun ContinueCard(card: CardSpec, fallbackTint: Color) {
 @Composable
 private fun StatusPill(state: PlaylistState, modifier: Modifier = Modifier) {
     if (state is PlaylistState.Loaded) return
-    GlassPanel(modifier = modifier, fill = Glass.colors.fill, edge = Glass.colors.edge) {
+    GlassPanel(modifier = modifier, shape = Corner.Medium, fill = Glass.colors.fill, edge = Glass.colors.edge) {
         val text = statusText(state)
         if (text == null) {
             Spinner(modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp), diameter = 24.dp)

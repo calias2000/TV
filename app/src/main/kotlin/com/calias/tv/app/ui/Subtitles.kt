@@ -3,7 +3,6 @@ package com.calias.tv.app.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,7 +37,7 @@ fun SubtitleLine(text: String, size: SubtitleSize, modifier: Modifier = Modifier
         textAlign = TextAlign.Center,
         modifier = modifier
             .widthIn(max = 800.dp)
-            .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+            .background(Color.Black.copy(alpha = 0.6f), Corner.Small)
             .padding(horizontal = 16.dp, vertical = 6.dp),
     )
 }

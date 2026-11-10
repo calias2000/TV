@@ -39,6 +39,7 @@ import com.calias.tv.app.formatTime
 import com.calias.tv.app.ui.Edge
 import com.calias.tv.app.ui.Glass
 import com.calias.tv.app.ui.GlassPanel
+import com.calias.tv.app.ui.Space
 import com.calias.tv.core.Channel
 import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.library.Category
@@ -125,7 +126,7 @@ fun ChannelPanel(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             GlassPanel(modifier = Modifier.width(360.dp).fillMaxHeight()) {
-                Column(modifier = Modifier.padding(horizontal = 12.dp).padding(top = 16.dp)) {
+                Column(modifier = Modifier.padding(horizontal = Space.Inset).padding(top = Space.Gap)) {
                     val title = if (state.level == PanelLevel.GROUPS) "Groups" else groups[state.group].name
                     PanelTitle(title)
                     // New list (and new initial focus) whenever the level or browsed group changes.
@@ -182,6 +183,6 @@ internal fun PanelTitle(text: String) {
         text = text,
         color = Glass.overVideo.text,
         style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 4.dp),
+        modifier = Modifier.padding(start = Space.Inset, end = Space.Inset, bottom = 4.dp),
     )
 }

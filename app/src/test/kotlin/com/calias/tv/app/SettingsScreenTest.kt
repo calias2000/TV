@@ -1,7 +1,8 @@
 package com.calias.tv.app
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import com.calias.tv.app.ui.AppFont
@@ -9,7 +10,10 @@ import com.calias.tv.app.ui.AppTheme
 import com.calias.tv.app.ui.SubtitleSize
 import com.calias.tv.core.Channel
 import com.calias.tv.core.playlist.Playlist
+import com.calias.tv.core.profile.Profile
+import com.calias.tv.core.profile.Source
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,24 +32,28 @@ class SettingsScreenTest {
         Playlist(epgUrl = null, channels = listOf(Channel("1", "One", "http://x/1", group = null), Channel("2", "Two", "http://x/2", group = null))),
     )
 
+    private val profile = Profile("a", "Mum", Source.Direct("https://tv.example/live/user/secret/list.m3u"))
+
     private fun screen(
         state: PlaylistState = loaded,
         onSync: () -> Unit = {},
+        onEditProfile: () -> Unit = {},
         font: AppFont = AppFont.SYSTEM,
         onFont: (AppFont) -> Unit = {},
         size: SubtitleSize = SubtitleSize.MEDIUM,
         onSize: (SubtitleSize) -> Unit = {},
     ) = compose.setContent {
         AppTheme(dark = true, font = AppFont.SYSTEM) {
-            SettingsScreen(state, onSync, font, onFont, size, onSize)
+            SettingsScreen(profile, state, onSync, onEditProfile, font, onFont, size, onSize)
         }
     }
 
     @Test
-    fun `shows the playlist source and how many entries loaded`() {
+    fun `shows the profile name, never its server, and how many entries loaded`() {
         screen()
         compose.onNodeWithText("Settings").assertIsDisplayed()
-        compose.onNodeWithText(PlaylistLoader.PLAYLIST_URL).assertIsDisplayed()
+        compose.onNodeWithText("Profile: Mum").assertIsDisplayed()
+        assertTrue(compose.onAllNodesWithText("tv.example", substring = true).fetchSemanticsNodes().isEmpty())
         compose.onNodeWithText("Playlist loaded: 2 entries").assertIsDisplayed()
     }
 
@@ -61,6 +69,14 @@ class SettingsScreenTest {
         screen(onSync = { syncs++ })
         compose.onNodeWithText("Sync now").focusAndPressOk(compose)
         assertEquals(1, syncs)
+    }
+
+    @Test
+    fun `Edit profile opens the profile form`() {
+        var edits = 0
+        screen(onEditProfile = { edits++ })
+        compose.onNodeWithText("Edit profile").focusAndPressOk(compose)
+        assertEquals(1, edits)
     }
 
     @Test

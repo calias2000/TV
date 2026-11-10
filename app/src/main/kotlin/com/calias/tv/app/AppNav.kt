@@ -16,6 +16,7 @@ import com.calias.tv.app.ui.Edge
 import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.library.Category
 import com.calias.tv.core.library.Library
+import com.calias.tv.core.profile.Profile
 import com.calias.tv.core.recents.Recents
 import com.calias.tv.core.resume.Resume
 
@@ -37,10 +38,11 @@ data class Watch(val kind: ContentKind, val channelId: String)
  */
 @Composable
 fun AppNav(
+    profile: Profile,
+    onProfileDialog: (ProfileDialog) -> Unit,
     state: PlaylistState,
     guide: Guide,
     onSync: () -> Unit,
-    onToggleTheme: () -> Unit,
     look: Look,
     prefs: PrefsViewModel,
 ) {
@@ -72,8 +74,9 @@ fun AppNav(
                     onResume = { open(Watch(it.channel.kind, it.channel.id)) },
                     onRecentLive = { open(LiveTv(it.streamUrl)) },
                     onOpen = open,
+                    onProfiles = { onProfileDialog(ProfileDialog.Switch) },
                     onSync = onSync,
-                    onToggleTheme = onToggleTheme,
+                    onToggleTheme = prefs::toggleDark,
                 )
             }
             entry<LiveTv> { key ->
@@ -112,8 +115,10 @@ fun AppNav(
             }
             entry<Settings> {
                 SettingsScreen(
+                    profile = profile,
                     state = state,
                     onSync = onSync,
+                    onEditProfile = { onProfileDialog(ProfileDialog.Form(profile.id)) },
                     font = look.font,
                     onFont = prefs::setFont,
                     subtitleSize = look.subtitleSize,

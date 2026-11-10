@@ -20,6 +20,7 @@ import com.calias.tv.app.browse.PosterGrid
 import com.calias.tv.app.ui.Edge
 import com.calias.tv.app.ui.Glass
 import com.calias.tv.app.ui.SectionTint
+import com.calias.tv.app.ui.Space
 import com.calias.tv.core.Channel
 import com.calias.tv.core.resume.Resume
 import com.calias.tv.core.resume.ResumeRecord
@@ -33,7 +34,7 @@ import com.calias.tv.core.series.Shows
 @Composable
 private fun Shelf(title: String, count: Int, noun: String, content: @Composable () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().padding(Edge.Margin)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.Bottom) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Space.Gap), verticalAlignment = Alignment.Bottom) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.headlineMedium,

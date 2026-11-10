@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and lower: nothing the app stores is backed up. Android 12 and higher use data_extraction_rules.xml. -->
+<full-backup-content>
+    <exclude domain="root" path="." />
+</full-backup-content>

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,10 +31,12 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import com.calias.tv.app.ui.Corner
 import com.calias.tv.app.ui.Glass
 import com.calias.tv.app.ui.GlassSurface
 import com.calias.tv.app.ui.PictureGlow
 import com.calias.tv.app.ui.ProgressBar
+import com.calias.tv.app.ui.Space
 import com.calias.tv.app.ui.fadeEdges
 
 /**
@@ -58,9 +59,9 @@ fun PosterGrid(count: Int, columns: Int, card: @Composable (index: Int, focus: M
         columns = GridCells.Fixed(columns),
         state = gridState,
         modifier = Modifier.fillMaxSize().fadeEdges(),
-        contentPadding = PaddingValues(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(vertical = Space.Gap),
+        verticalArrangement = Arrangement.spacedBy(Space.Gap),
+        horizontalArrangement = Arrangement.spacedBy(Space.Gap),
     ) {
         items(count) { index ->
             val tracking = Modifier.onFocusChanged { if (it.hasFocus) last = index }
@@ -93,7 +94,7 @@ fun PosterCard(
         GlassSurface(
             onClick = onClick,
             modifier = modifier.fillMaxWidth().aspectRatio(aspect).onFocusChanged { focused = it.hasFocus },
-            shape = RoundedCornerShape(12.dp),
+            shape = Corner.Medium,
         ) {
             if (!imageUrl.isNullOrBlank()) {
                 AsyncImage(

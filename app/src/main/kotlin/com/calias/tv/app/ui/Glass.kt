@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,7 +34,7 @@ import androidx.tv.material3.Surface
 fun GlassSurface(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    shape: Shape = Glass.shape,
+    shape: Shape = Corner.Large,
     colors: GlassColors = Glass.colors,
     content: @Composable BoxScope.() -> Unit,
 ) {
@@ -63,7 +62,7 @@ fun GlassSurface(
     )
 }
 
-/** A pill-shaped glass button with a text. [textStyle] is the text's look (Settings shows each font in itself). */
+/** A glass button with a text. [textStyle] is the text's look (Settings shows each font in itself). */
 @Composable
 fun GlassButton(
     text: String,
@@ -73,8 +72,8 @@ fun GlassButton(
     textStyle: TextStyle = LocalTextStyle.current,
 ) {
     // A fixed height, so every button is as tall as the others whatever glyphs (a ✓) its text has.
-    GlassSurface(onClick = onClick, modifier = modifier.height(48.dp), shape = RoundedCornerShape(50), colors = colors) {
-        Text(text = text, style = textStyle, modifier = Modifier.align(Alignment.Center).padding(horizontal = 24.dp))
+    GlassSurface(onClick = onClick, modifier = modifier.height(Space.Control), shape = Corner.Medium, colors = colors) {
+        Text(text = text, style = textStyle, modifier = Modifier.align(Alignment.Center).padding(horizontal = Space.Inner))
     }
 }
 
@@ -97,15 +96,16 @@ fun GlassIconButton(iconRes: Int, label: String, onClick: () -> Unit, modifier: 
 @Composable
 fun GlassPanel(
     modifier: Modifier = Modifier,
+    shape: Shape = Corner.Large,
     fill: Color = Color.Black.copy(alpha = 0.90f),
     edge: Color = Color.White.copy(alpha = 0.14f),
     content: @Composable BoxScope.() -> Unit,
 ) {
     Box(
         modifier = modifier
-            .clip(Glass.shape)
+            .clip(shape)
             .background(fill)
-            .border(1.dp, edge, Glass.shape),
+            .border(1.dp, edge, shape),
         content = content,
     )
 }

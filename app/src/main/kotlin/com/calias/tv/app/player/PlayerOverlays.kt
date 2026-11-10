@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,11 +31,13 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.calias.tv.app.R
+import com.calias.tv.app.ui.Corner
 import com.calias.tv.app.ui.Edge
 import com.calias.tv.app.ui.Glass
 import com.calias.tv.app.ui.GlassButton
 import com.calias.tv.app.ui.GlassPanel
 import com.calias.tv.app.ui.ProgressBar
+import com.calias.tv.app.ui.Space
 import com.calias.tv.app.ui.Spinner
 import com.calias.tv.app.ui.SubtitleLine
 import com.calias.tv.app.ui.SubtitleSize
@@ -44,11 +45,11 @@ import com.calias.tv.app.ui.SubtitleSize
 // Small overlays drawn on top of the video. Fixed white-on-dark colors: they sit on video in
 // either theme.
 
-/** The round dark disc behind the icons in the middle of the screen, so they read on any picture. */
+/** The dark badge behind the icons in the middle of the screen, so they read on any picture. */
 @Composable
-private fun Disc(modifier: Modifier, content: @Composable BoxScope.() -> Unit) {
+private fun Badge(modifier: Modifier, content: @Composable BoxScope.() -> Unit) {
     Box(
-        modifier = modifier.size(88.dp).background(Color.Black.copy(alpha = 0.6f), CircleShape),
+        modifier = modifier.size(88.dp).background(Color.Black.copy(alpha = 0.6f), Corner.Large),
         contentAlignment = Alignment.Center,
         content = content,
     )
@@ -57,7 +58,7 @@ private fun Disc(modifier: Modifier, content: @Composable BoxScope.() -> Unit) {
 /** Shown while the player waits for data: at start, after a seek, on a slow network. */
 @Composable
 fun LoadingSpinner(modifier: Modifier = Modifier) {
-    Disc(modifier) { Spinner(diameter = 44.dp, color = Color.White) }
+    Badge(modifier) { Spinner(diameter = 44.dp, color = Color.White) }
 }
 
 /**
@@ -67,7 +68,7 @@ fun LoadingSpinner(modifier: Modifier = Modifier) {
 @Composable
 fun PlayPauseIcon(visible: Boolean, paused: Boolean, modifier: Modifier = Modifier) {
     AnimatedVisibility(visible = visible, modifier = modifier, enter = fadeIn(), exit = fadeOut()) {
-        Disc(Modifier) {
+        Badge(Modifier) {
             Icon(
                 painter = painterResource(if (paused) R.drawable.ic_play else R.drawable.ic_pause),
                 contentDescription = if (paused) "Play" else "Pause",
@@ -117,7 +118,7 @@ fun ErrorPanel(failure: Failure, onRetry: () -> Unit, modifier: Modifier = Modif
     LaunchedEffect(Unit) { retryFocus.requestFocus() }
     GlassPanel(modifier) {
         Column(
-            modifier = Modifier.padding(32.dp),
+            modifier = Modifier.padding(Space.Panel),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {

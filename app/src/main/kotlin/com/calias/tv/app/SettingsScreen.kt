@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,27 +24,32 @@ import androidx.tv.material3.LocalTextStyle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.calias.tv.app.ui.AppFont
+import com.calias.tv.app.ui.Corner
 import com.calias.tv.app.ui.Edge
 import com.calias.tv.app.ui.Glass
 import com.calias.tv.app.ui.GlassButton
 import com.calias.tv.app.ui.GlassPanel
 import com.calias.tv.app.ui.LocalBackdrop
+import com.calias.tv.app.ui.Space
 import com.calias.tv.app.ui.Spinner
 import com.calias.tv.app.ui.SubtitleLine
 import com.calias.tv.app.ui.SubtitleSize
+import com.calias.tv.core.profile.Profile
 import com.calias.tv.app.ui.fadeEdges
 
 /** A mid-dark "picture" behind the subtitle preview, so the dark subtitle glass shows against it. */
 private val PREVIEW_PICTURE = Color(0xFF3B424D)
 
 /**
- * Settings: glass sections for the playlist (source, status, sync), the font, and the subtitle size with
+ * Settings: glass sections for the profile (source, status, sync, edit), the font, and the subtitle size with
  * a live preview. The sections scroll when they do not fit the screen.
  */
 @Composable
 fun SettingsScreen(
+    profile: Profile,
     state: PlaylistState,
     onSync: () -> Unit,
+    onEditProfile: () -> Unit,
     font: AppFont,
     onFont: (AppFont) -> Unit,
     subtitleSize: SubtitleSize,
@@ -61,10 +65,12 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxSize().fadeEdges().verticalScroll(rememberScrollState()).padding(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            SettingsSection("Playlist") {
-                Text(text = PlaylistLoader.PLAYLIST_URL, color = Glass.colors.textMuted)
+            SettingsSection("Profile: ${profile.name}") {
                 statusText(state)?.let { Text(text = it) } ?: Spinner(diameter = 24.dp)
-                GlassButton(text = "Sync now", onClick = onSync)
+                Row(horizontalArrangement = Arrangement.spacedBy(Space.Gap)) {
+                    GlassButton(text = "Sync now", onClick = onSync)
+                    GlassButton(text = "Edit profile", onClick = onEditProfile)
+                }
             }
             SettingsSection("Font") {
                 Choices(AppFont.entries, font, AppFont::label, onFont) {
@@ -77,7 +83,7 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(110.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(Corner.Medium)
                         .background(PREVIEW_PICTURE)
                         .padding(bottom = 16.dp),
                     contentAlignment = Alignment.BottomCenter,
@@ -99,7 +105,7 @@ private fun <T> Choices(
     onSelect: (T) -> Unit,
     textStyle: @Composable (T) -> TextStyle = { LocalTextStyle.current },
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Space.Gap)) {
         options.forEach { option ->
             GlassButton(
                 text = if (option == selected) "✓ ${label(option)}" else label(option),
@@ -114,7 +120,7 @@ private fun <T> Choices(
 @Composable
 private fun SettingsSection(title: String, content: @Composable ColumnScope.() -> Unit) {
     GlassPanel(modifier = Modifier.fillMaxWidth(), fill = Glass.colors.fill, edge = Glass.colors.edge) {
-        Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(modifier = Modifier.padding(Space.Panel), verticalArrangement = Arrangement.spacedBy(Space.Gap)) {
             Text(text = title, style = MaterialTheme.typography.titleMedium)
             content()
         }

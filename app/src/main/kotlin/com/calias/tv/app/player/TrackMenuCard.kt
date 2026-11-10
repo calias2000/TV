@@ -18,6 +18,7 @@ import com.calias.tv.app.browse.ChannelRow
 import com.calias.tv.app.ui.Edge
 import com.calias.tv.app.ui.Glass
 import com.calias.tv.app.ui.GlassPanel
+import com.calias.tv.app.ui.Space
 
 /** One row of the card: a track (or "Off"), whether it plays now, whether this TV can play it, and what OK does. */
 private class TrackRow(val label: String, val selected: Boolean, val supported: Boolean, val onPick: () -> Unit)
@@ -42,10 +43,10 @@ fun TrackMenuCard(visible: Boolean, menu: TrackMenu, tracks: TracksState, onPick
                     tracks.text.map { TrackRow(it.label, it.selected, it.supported) { tracks.select(it) } }
         }
         GlassPanel(modifier = Modifier.width(340.dp).fillMaxHeight()) {
-            Column(modifier = Modifier.padding(horizontal = 12.dp).padding(top = 16.dp)) {
+            Column(modifier = Modifier.padding(horizontal = Space.Inset).padding(top = Space.Gap)) {
                 PanelTitle(menu.label)
                 if (rows.isEmpty()) {
-                    Text(text = "Nothing to choose", color = Glass.overVideo.textMuted, modifier = Modifier.padding(12.dp))
+                    Text(text = "Nothing to choose", color = Glass.overVideo.textMuted, modifier = Modifier.padding(Space.Inset))
                 } else {
                     BrowseList(count = rows.size, focusIndex = rows.indexOfFirst { it.selected }.coerceAtLeast(0)) { index, focus ->
                         val row = rows[index]
