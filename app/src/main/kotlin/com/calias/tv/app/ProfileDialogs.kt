@@ -35,7 +35,7 @@ import com.calias.tv.core.profile.Profiles
 import com.calias.tv.core.profile.Source
 import kotlinx.coroutines.launch
 
-/** The profile modal that is open: the list to switch or add, or the form to add (id null) or edit the profile called [id]. */
+/** The profile modal that is open: the list to switch or add, or the form to add (`id` null) or edit the profile called `id`. */
 sealed interface ProfileDialog {
     data object Switch : ProfileDialog
     data class Form(val id: String?) : ProfileDialog
