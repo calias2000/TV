@@ -8,11 +8,13 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.calias.tv.app.ui.AppFont
+import com.calias.tv.app.player.TrackMenu
 import com.calias.tv.app.ui.SubtitleSize
 import com.calias.tv.core.Channel
 import com.calias.tv.core.resume.ResumeRecord
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -21,9 +23,10 @@ import kotlinx.coroutines.launch
 internal val Context.dataStore by preferencesDataStore(name = "tv", corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() })
 
 /**
- * What the active profile remembers between runs, for the screens: the theme, font and subtitle size, where
- * each movie or series was left, and the recent live channels. Screens use this ViewModel; none of them
- * touch DataStore directly. Writes run in [viewModelScope], so leaving the player does not cancel a save.
+ * What the active profile remembers between runs, for the screens: the theme, font and subtitle size, the
+ * audio and subtitle language it last chose, where each movie or series was left, and the recent live
+ * channels. Screens use this ViewModel; none of them touch DataStore directly. Writes run in
+ * [viewModelScope], so leaving the player does not cancel a save.
  */
 class PrefsViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -50,6 +53,18 @@ class PrefsViewModel(app: Application) : AndroidViewModel(app) {
 
     fun saveRecentLive(channel: Channel) {
         viewModelScope.launch { store.saveRecentLive(channel) }
+    }
+
+    suspend fun trackPrefs(): TrackPrefs = store.trackPrefs.first()
+
+    /** [language] is a language code, or [TrackPrefs.OFF] for subtitles. */
+    fun saveTrackChoice(menu: TrackMenu, language: String) {
+        viewModelScope.launch {
+            when (menu) {
+                TrackMenu.AUDIO -> store.setAudioLanguage(language)
+                TrackMenu.SUBTITLES -> store.setSubtitleLanguage(language)
+            }
+        }
     }
 
     suspend fun startPosition(channel: Channel): Long = store.startPosition(channel)

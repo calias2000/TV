@@ -7,7 +7,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import com.calias.tv.app.ui.AppFont
 import com.calias.tv.app.ui.AppTheme
-import com.calias.tv.app.ui.SubtitleSize
 import com.calias.tv.core.Channel
 import com.calias.tv.core.playlist.Playlist
 import com.calias.tv.core.profile.Profile
@@ -40,11 +39,9 @@ class SettingsScreenTest {
         onEditProfile: () -> Unit = {},
         font: AppFont = AppFont.SYSTEM,
         onFont: (AppFont) -> Unit = {},
-        size: SubtitleSize = SubtitleSize.MEDIUM,
-        onSize: (SubtitleSize) -> Unit = {},
     ) = compose.setContent {
         AppTheme(dark = true, font = AppFont.SYSTEM) {
-            SettingsScreen(profile, state, onSync, onEditProfile, font, onFont, size, onSize)
+            SettingsScreen(profile, state, onSync, onEditProfile, font, onFont)
         }
     }
 
@@ -80,23 +77,14 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `the current font and subtitle size have a check mark, and picking one reports it`() {
+    fun `the current font has a check mark, and picking one reports it`() {
         var font: AppFont? = null
-        var size: SubtitleSize? = null
-        screen(font = AppFont.INTER, onFont = { font = it }, size = SubtitleSize.LARGE, onSize = { size = it })
+        screen(font = AppFont.INTER, onFont = { font = it })
 
         compose.onNodeWithText("✓ Inter").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("✓ Large").performScrollTo().assertIsDisplayed()
 
         compose.onNodeWithText("Manrope").performScrollTo().focusAndPressOk(compose)
-        compose.onNodeWithText("Extra large").performScrollTo().focusAndPressOk(compose)
         assertEquals(AppFont.MANROPE, font)
-        assertEquals(SubtitleSize.EXTRA_LARGE, size)
     }
 
-    @Test
-    fun `the subtitle preview is on the screen`() {
-        screen()
-        compose.onNodeWithText("This is how subtitles look.").performScrollTo().assertIsDisplayed()
-    }
 }

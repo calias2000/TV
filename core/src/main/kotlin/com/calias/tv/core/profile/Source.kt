@@ -25,6 +25,22 @@ sealed interface Source {
             else -> null
         }
 
+        // The characters of an access code: letters and digits without I, O, 0 and 1 (easy to mix up). As on the server.
+        private val CODE = Regex("[A-HJ-NP-Z2-9]{4}")
+
+        /** The access code in [typed] (capitals, spaces and dashes ignored), or null if it is not one. */
+        fun code(typed: String): String? = typed.filterNot { it.isWhitespace() || it == '-' }.uppercase().takeIf { CODE.matches(it) }
+
+        private fun codeLink(serverBase: String, code: String) = "${serverBase.trimEnd('/')}/api/iptv/p/$code/list"
+
+        /**
+         * The source for what the user typed in the one field: an http(s) address (see [direct]), or an access
+         * code, which becomes the playlist link of that code on the server at [serverBase]. Null if it is neither,
+         * or if it is a code and this build has no server address (blank [serverBase]).
+         */
+        fun parse(typed: String, serverBase: String): Direct? =
+            direct(typed) ?: code(typed)?.takeIf { serverBase.isNotBlank() }?.let { Direct(codeLink(serverBase, it)) }
+
         /** A [Direct] source for what the user typed, or null if it is not an http(s) URL with a host. */
         fun direct(typed: String): Direct? {
             val url = typed.trim()

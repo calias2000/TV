@@ -35,6 +35,7 @@ import androidx.media3.ui.compose.state.rememberProgressStateWithTickInterval
 import androidx.tv.material3.Text
 import com.calias.tv.app.rememberNowMs
 import com.calias.tv.app.ui.Edge
+import com.calias.tv.app.TrackPrefs
 import com.calias.tv.app.ui.SubtitleSize
 import com.calias.tv.core.Channel
 import com.calias.tv.core.epg.Guide
@@ -75,7 +76,9 @@ private val STEADY_AFTER = 10.seconds
  * [groups] are what the panel browses (live categories, or one flat list).
  *
  * Movies and episodes: [startPosition] says where to start an item (resume), [onProgress] reports where
- * the user is, [subtitleSize] is the size of the subtitles. Live: [onTuned] reports each channel that
+ * the user is, [subtitleSize] is the size of the subtitles (changed in the subtitles card: [onSubtitleSize]),
+ * [trackPrefs] is the audio and subtitle language chosen last, applied before each item starts, and
+ * [onTrackChoice] hears each new choice. Live: [onTuned] reports each channel that
  * starts. Each defaults to doing nothing (or the default size).
  */
 @OptIn(UnstableApi::class)
@@ -92,6 +95,9 @@ fun PlayerScreen(
     onProgress: (Channel, positionMs: Long, durationMs: Long) -> Unit = { _, _, _ -> },
     onTuned: (Channel) -> Unit = {},
     subtitleSize: SubtitleSize = SubtitleSize.DEFAULT,
+    onSubtitleSize: (SubtitleSize) -> Unit = {},
+    trackPrefs: suspend () -> TrackPrefs = { TrackPrefs() },
+    onTrackChoice: (TrackMenu, String) -> Unit = { _, _ -> },
 ) {
     val context = LocalContext.current
     val player = remember { buildPlayer(context) }
@@ -107,7 +113,7 @@ fun PlayerScreen(
     val progress = rememberProgressStateWithTickInterval(player, tickIntervalMs = 1_000)
     val paused = flags.paused
     val controls = rememberControlsState(paused)
-    val tracks = rememberTracksState(player)
+    val tracks = rememberTracksState(player, onTrackChoice)
     // Next episode: offered during the last seconds, and started by itself when the episode ends.
     val nextIndex = remember(isLive, zap.group, zap.loaded) {
         if (isLive) null else Episodes.nextIndex(zap.channels, zap.loaded)
@@ -149,6 +155,7 @@ fun PlayerScreen(
         if (!started) return@LaunchedEffect
         if (isLive) onTuned(channel)
         val start = if (isLive) 0L else startPosition(channel)
+        if (!isLive) player.trackSelectionParameters = player.trackSelectionParameters.withPrefs(trackPrefs())
         player.setMediaItem(MediaItem.fromUri(channel.streamUrl), start)
         player.prepare()
         player.playWhenReady = true
@@ -252,6 +259,7 @@ fun PlayerScreen(
                 onOpenPanel = { panel.open(zap.group) },
                 onNextEpisode = ::playNext,
                 onBarKey = controls::onBarKey,
+                onBarKeyUp = controls::onBarKeyUp,
             ),
     ) {
         ContentFrame(player = player, modifier = Modifier.fillMaxSize())
@@ -322,6 +330,8 @@ fun PlayerScreen(
                 visible = controls.menuOpen,
                 menu = controls.button ?: TrackMenu.AUDIO,
                 tracks = tracks,
+                subtitleSize = subtitleSize,
+                onSubtitleSize = onSubtitleSize,
                 onPicked = controls::closeMenu,
                 modifier = Modifier.align(Alignment.CenterEnd),
             )

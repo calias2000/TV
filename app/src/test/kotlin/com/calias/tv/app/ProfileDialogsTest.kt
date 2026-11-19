@@ -74,11 +74,12 @@ class ProfileDialogsTest {
     private var done = 0
     private var deleted = 0
 
-    private fun form(existing: Profile?, failure: String? = null) = compose.setContent {
+    private fun form(existing: Profile?, failure: String? = null, serverBase: String = "http://pc:5002") = compose.setContent {
         AppTheme(dark = true, font = AppFont.SYSTEM) {
             ProfileForm(
                 existing = existing,
                 defaultName = "Profile 1",
+                serverBase = serverBase,
                 onSave = { name, source -> saved = name to source; failure },
                 onDone = { done++ },
             )
@@ -103,11 +104,31 @@ class ProfileDialogsTest {
     }
 
     @Test
+    fun `a code is saved as the playlist link of that code on the server`() {
+        form(existing = null)
+        fields()[1].performTextInput(" ab-23 ")
+        compose.onNodeWithText("Save").focusAndPressOk(compose)
+        compose.waitForIdle()
+
+        assertEquals("Profile 1" to Source.Direct("http://pc:5002/api/iptv/p/AB23/list"), saved)
+    }
+
+    @Test
+    fun `a code in a build without a server address is explained`() {
+        form(existing = null, serverBase = "")
+        fields()[1].performTextInput("AB23")
+        compose.onNodeWithText("Save").focusAndPressOk(compose)
+
+        compose.onNodeWithText("This app was built without a server address, so codes do not work. Type the full address.").assertIsDisplayed()
+        assertNull(saved)
+    }
+
+    @Test
     fun `a missing name or a bad address is explained and nothing is saved`() {
         form(existing = null)
 
         compose.onNodeWithText("Save").focusAndPressOk(compose)
-        compose.onNodeWithText("The address must start with http:// or https:// and have no spaces.").assertIsDisplayed()
+        compose.onNodeWithText("Enter the code you were given, or an address that starts with http:// or https:// and has no spaces.").assertIsDisplayed()
 
         fields()[0].performTextClearance()
         fields()[1].performTextInput("https://a.example/x.m3u")

@@ -64,6 +64,28 @@ class ProfileStoreTest {
     }
 
     @Test
+    fun `each profile remembers its own audio and subtitle language, and loses them with the profile`() = runTest {
+        val store = newStore()
+        assertEquals(TrackPrefs(), store.trackPrefs.first())
+        store.add("Mum", mum, id = "a")
+        store.setAudioLanguage("pt")
+        store.setSubtitleLanguage("en")
+        assertEquals(TrackPrefs(audio = "pt", subtitles = "en"), store.trackPrefs.first())
+
+        store.add("Dad", dad, id = "b")
+        assertEquals(TrackPrefs(), store.trackPrefs.first())
+        store.setSubtitleLanguage(TrackPrefs.OFF)
+        assertEquals(TrackPrefs(audio = null, subtitles = TrackPrefs.OFF), store.trackPrefs.first())
+
+        store.switchTo("a")
+        assertEquals(TrackPrefs(audio = "pt", subtitles = "en"), store.trackPrefs.first())
+
+        store.remove("a")
+        store.add("Again", mum, id = "a")
+        assertEquals(TrackPrefs(), store.trackPrefs.first())
+    }
+
+    @Test
     fun `editing a profile keeps what it remembers`() = runTest {
         val store = newStore()
         store.add("Mum", mum, id = "a")

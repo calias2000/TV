@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -119,7 +120,7 @@ fun HomeScreen(
             // height, even when empty, so the tiles never jump when you move between tiles.
             Column(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically),
+                verticalArrangement = Arrangement.spacedBy(TILES_TO_CARDS, Alignment.CenterVertically),
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = Edge.Margin),
@@ -174,6 +175,11 @@ fun HomeScreen(
 
 /** Room for the "Continue watching" title and one card, so the layout above it does not move. */
 private val CARDS_AREA = 120.dp
+
+private val CARD_WIDTH = 300.dp
+
+/** The gap between the tiles and the row of recent cards under them. */
+private val TILES_TO_CARDS = 48.dp
 
 /** "1 movie", "2 movies". */
 internal fun countOf(n: Int, noun: String) = if (n == 1) "$n $noun" else "$n ${noun}s"
@@ -236,7 +242,7 @@ private fun ContinueCard(card: CardSpec, fallbackTint: Color) {
     PictureGlow(focused, card.channel.logo, fallbackTint)
     GlassSurface(
         onClick = card.onClick,
-        modifier = Modifier.width(260.dp).onFocusChanged { focused = it.hasFocus },
+        modifier = Modifier.width(CARD_WIDTH).onFocusChanged { focused = it.hasFocus },
         shape = Corner.Medium,
     ) {
         Row(
@@ -246,17 +252,18 @@ private fun ContinueCard(card: CardSpec, fallbackTint: Color) {
         ) {
             ChannelLogo(card.channel)
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = card.channel.name, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                if (card.subtitle != null) {
-                    Text(
-                        text = card.subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Glass.colors.textMuted,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
+                // One line for the name, one under it, and the progress bar's room, even when there is nothing to
+                // show there: every card in a row is then as tall as the others, whatever the name is.
+                Text(text = card.channel.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    text = card.subtitle ?: " ",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Glass.colors.textMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 if (card.progress != null) ProgressBar(card.progress, Modifier.padding(top = 4.dp))
+                else Spacer(Modifier.padding(top = 4.dp).height(3.dp))
             }
         }
     }

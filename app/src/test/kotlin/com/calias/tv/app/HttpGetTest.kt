@@ -33,6 +33,10 @@ class HttpGetTest {
             exchange.sendResponseHeaders(404, -1)
             exchange.close()
         }
+        server.createContext("/broken") { exchange ->
+            exchange.sendResponseHeaders(500, -1)
+            exchange.close()
+        }
         server.createContext("/slow") { exchange ->
             Thread.sleep(3_000) // longer than the time the test allows
             exchange.sendResponseHeaders(200, -1)
@@ -51,11 +55,12 @@ class HttpGetTest {
     }
 
     @Test
-    fun `an answer other than 200 fails with a readable message`() {
-        val error = assertFailsWith<IllegalStateException> {
-            runBlocking { httpGet(url("/missing"), "Playlist", 5.seconds) { it.readBytes() } }
-        }
-        assertEquals("Playlist server answered HTTP 404", error.message)
+    fun `an answer other than 200 fails with a readable message, a 404 says what it usually means`() {
+        fun failure(path: String) = assertFailsWith<IllegalStateException> {
+            runBlocking { httpGet(url(path), "Playlist", 5.seconds) { it.readBytes() } }
+        }.message
+        assertEquals("Playlist server answered HTTP 500", failure("/broken"))
+        assertEquals("Playlist not found (HTTP 404): the link may be wrong, expired or not ready yet", failure("/missing"))
     }
 
     @Test

@@ -2,6 +2,9 @@ package com.calias.tv.app
 
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -9,10 +12,12 @@ import com.calias.tv.app.ui.AppFont
 import com.calias.tv.app.ui.AppTheme
 import com.calias.tv.core.Channel
 import com.calias.tv.core.epg.Guide
+import com.calias.tv.core.epg.Program
 import com.calias.tv.core.library.Counts
 import com.calias.tv.core.playlist.Playlist
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,14 +37,14 @@ class HomeScreenTest {
     private var opened: Any? = null
     private var profilesOpened = 0
 
-    private fun home(state: PlaylistState, counts: Counts?, recentLive: List<Channel> = listOf(recent)) = compose.setContent {
+    private fun home(state: PlaylistState, counts: Counts?, recentLive: List<Channel> = listOf(recent), guide: Guide = Guide.EMPTY) = compose.setContent {
         AppTheme(dark = true, font = AppFont.SYSTEM) {
             HomeScreen(
                 state = state,
                 counts = counts,
                 resume = emptyList(),
                 recentLive = recentLive,
-                guide = Guide.EMPTY,
+                guide = guide,
                 onResume = {},
                 onRecentLive = {},
                 onOpen = { opened = it },
@@ -64,6 +69,21 @@ class HomeScreenTest {
         home(loaded, Counts(1, 0, 0))
         compose.press(Key.DirectionCenter)
         assertEquals(LiveTv("http://x/c1"), opened)
+    }
+
+    @Test
+    fun `recent cards are as tall as each other, whatever the name and whatever is on now`() {
+        val long = Channel("c2", "A very long channel name that would need three lines on a card this wide", "http://x/c2", group = null)
+        val onNow = Channel("c3", "With Guide", "http://x/c3", group = null, tvgId = "tv3")
+        val now = System.currentTimeMillis()
+        val guide = Guide(mapOf("tv3" to listOf(Program(now - 600_000, now + 600_000, "The News"))))
+        home(loaded, Counts(3, 0, 0), recentLive = listOf(recent, long, onNow), guide = guide)
+
+        fun height(name: String) = compose.onAllNodes(hasClickAction() and hasText(name))[0].fetchSemanticsNode().size.height
+        assertEquals(height("Channel One"), height(long.name))
+        assertEquals(height("Channel One"), height(onNow.name))
+        // As tall as a logo and two lines need, not a poster-sized box: the content stays centered in it.
+        assertTrue(height("Channel One") < with(compose.density) { 80.dp.roundToPx() })
     }
 
     @Test

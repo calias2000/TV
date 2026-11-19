@@ -14,6 +14,7 @@ import androidx.compose.ui.input.key.type
  *   and the keys after it: [onBarKey]), LEFT/RIGHT seek. OK pauses, or plays the next episode while the
  *   "Next episode" card is offered. CH+/CH- step to the previous/next item.
  * - Panel open ([listOpen]): it owns the D-pad and OK (they reach the focused row); channel keys still zap.
+ * - Buttons act when OK is let go, so the bar's OK is used on the key release ([onBarKeyUp]).
  * - Error showing ([controlsEnabled] false): LEFT/RIGHT/OK reach the Retry button, DOWN still
  *   opens the panel, so a dead channel can be left without channel keys.
  */
@@ -30,9 +31,11 @@ fun Modifier.playerKeys(
     onOpenPanel: () -> Unit,
     onNextEpisode: () -> Unit,
     onBarKey: (Key) -> Boolean,
+    onBarKeyUp: (Key) -> Boolean,
 ): Modifier = onPreviewKeyEvent { event ->
-    if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
     val controls = !isLive && controlsEnabled
+    if (event.type == KeyEventType.KeyUp) return@onPreviewKeyEvent controls && barOpen && onBarKeyUp(event.key)
+    if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
     val panelKey = isLive && controlsEnabled
     when (event.key) {
         Key.ChannelUp -> { onZap(+1); true }

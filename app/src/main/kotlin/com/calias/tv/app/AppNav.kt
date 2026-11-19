@@ -121,8 +121,6 @@ fun AppNav(
                     onEditProfile = { onProfileDialog(ProfileDialog.Form(profile.id)) },
                     font = look.font,
                     onFont = prefs::setFont,
-                    subtitleSize = look.subtitleSize,
-                    onSubtitleSize = prefs::setSubtitleSize,
                 )
             }
             entry<Watch> { key ->
@@ -142,6 +140,9 @@ fun AppNav(
                         startPosition = prefs::startPosition,
                         onProgress = prefs::saveProgress,
                         subtitleSize = look.subtitleSize,
+                        onSubtitleSize = prefs::setSubtitleSize,
+                        trackPrefs = prefs::trackPrefs,
+                        onTrackChoice = prefs::saveTrackChoice,
                         onExit = back,
                     )
                 }

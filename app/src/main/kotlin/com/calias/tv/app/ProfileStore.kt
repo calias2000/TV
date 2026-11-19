@@ -33,7 +33,9 @@ private class ProfileKeys(id: String) {
     val recentLive = stringPreferencesKey("$id.recent_live")
     val font = stringPreferencesKey("$id.font")
     val subtitleSize = stringPreferencesKey("$id.subtitle_size")
-    val all: List<Preferences.Key<*>> = listOf(dark, resume, recentLive, font, subtitleSize)
+    val audioLanguage = stringPreferencesKey("$id.audio_language")
+    val subtitleLanguage = stringPreferencesKey("$id.subtitle_language")
+    val all: List<Preferences.Key<*>> = listOf(dark, resume, recentLive, font, subtitleSize, audioLanguage, subtitleLanguage)
 }
 
 /** The theme, font and subtitle size the app is drawn with. */
@@ -50,9 +52,9 @@ data class ProfilesState(val profiles: List<Profile>, val activeId: String?) {
 
 /**
  * Everything the app remembers, in one DataStore: the list of profiles, the active one, and for each
- * profile its theme, font, subtitle size, where each movie or series was left, and its recent live
- * channels. The reads and writes of viewing state always go to the active profile. No Android types, so
- * it is tested on the JVM with a DataStore on a temporary file.
+ * profile its theme, font, subtitle size, the audio and subtitle language it last chose, where each movie
+ * or series was left, and its recent live channels. The reads and writes of viewing state always go to the
+ * active profile. No Android types, so it is tested on the JVM with a DataStore on a temporary file.
  */
 class ProfileStore(private val store: DataStore<Preferences>) {
 
@@ -65,6 +67,12 @@ class ProfileStore(private val store: DataStore<Preferences>) {
             font = AppFont.entries.firstOrNull { it.name == prefs[keys.font] } ?: Look.DEFAULT.font,
             subtitleSize = SubtitleSize.entries.firstOrNull { it.name == prefs[keys.subtitleSize] } ?: Look.DEFAULT.subtitleSize,
         )
+    }
+
+    /** The audio and subtitle language the active profile last chose. */
+    val trackPrefs: Flow<TrackPrefs> = store.data.map { prefs ->
+        val keys = prefs.activeKeys() ?: return@map TrackPrefs()
+        TrackPrefs(audio = prefs[keys.audioLanguage], subtitles = prefs[keys.subtitleLanguage])
     }
 
     /** Everything remembered about where movies and episodes were left, for "Continue watching". */
@@ -107,6 +115,11 @@ class ProfileStore(private val store: DataStore<Preferences>) {
     suspend fun setFont(font: AppFont) = editActive { prefs, keys -> prefs[keys.font] = font.name }
 
     suspend fun setSubtitleSize(size: SubtitleSize) = editActive { prefs, keys -> prefs[keys.subtitleSize] = size.name }
+
+    suspend fun setAudioLanguage(language: String) = editActive { prefs, keys -> prefs[keys.audioLanguage] = language }
+
+    /** [language] is a language code, or [TrackPrefs.OFF]. */
+    suspend fun setSubtitleLanguage(language: String) = editActive { prefs, keys -> prefs[keys.subtitleLanguage] = language }
 
     suspend fun toggleDark() = editActive { prefs, keys -> prefs[keys.dark] = !(prefs[keys.dark] ?: Look.DEFAULT.dark) }
 

@@ -24,7 +24,8 @@ private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 /**
  * GET [url] and hand the response body to [read]. The whole request (lookup, connect, download and [read])
  * gets [timeout]; after that it fails with a readable message ("Playlist server did not answer in time").
- * Also fails with ("[what] server answered HTTP 404") unless the answer is 200.
+ * Also fails with ("[what] server answered HTTP 500") unless the answer is 200. A 404 says what it usually
+ * means: a link that is wrong, expired (an access code) or not ready yet (its playlist is not built).
  * Used by the playlist and guide loaders.
  */
 internal suspend fun <T> httpGet(url: String, what: String, timeout: Duration, read: (InputStream) -> T): T {
@@ -34,7 +35,10 @@ internal suspend fun <T> httpGet(url: String, what: String, timeout: Duration, r
             connection.connectTimeout = CONNECT_TIMEOUT.inWholeMilliseconds.toInt()
             connection.readTimeout = timeout.inWholeMilliseconds.toInt()
             val code = connection.responseCode
-            check(code == HttpURLConnection.HTTP_OK) { "$what server answered HTTP $code" }
+            check(code == HttpURLConnection.HTTP_OK) {
+                if (code == HttpURLConnection.HTTP_NOT_FOUND) "$what not found (HTTP 404): the link may be wrong, expired or not ready yet"
+                else "$what server answered HTTP $code"
+            }
             connection.inputStream.buffered().use(read)
         } finally {
             connection.disconnect()

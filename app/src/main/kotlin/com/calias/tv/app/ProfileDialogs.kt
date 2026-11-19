@@ -83,6 +83,7 @@ fun ProfileDialogHost(dialog: ProfileDialog?, state: ProfilesState, profiles: Pr
                 ProfileForm(
                     existing = existing,
                     defaultName = Profiles.defaultName(state.profiles),
+                    serverBase = BuildConfig.BACKEND_BASE,
                     onSave = { name, source -> profiles.save(existing, name, source) },
                     onDone = close,
                 )
@@ -105,7 +106,8 @@ internal fun ProfileList(state: ProfilesState, onPick: (Profile) -> Unit) {
 }
 
 /**
- * The fields of a profile: a name and the playlist address. [existing] is the profile being edited, or null
+ * The fields of a profile: a name and the playlist, typed as an access code or as a full address (see
+ * [Source.parse]; [serverBase] is the server codes belong to). [existing] is the profile being edited, or null
  * for a new one. [onSave] checks that the playlist loads and saves, returning why it failed or null; then
  * [onDone] runs. Focus starts on the field most likely to need typing: the address of a new profile, the
  * name of an existing one.
@@ -114,6 +116,7 @@ internal fun ProfileList(state: ProfilesState, onPick: (Profile) -> Unit) {
 internal fun ProfileForm(
     existing: Profile?,
     defaultName: String,
+    serverBase: String,
     onSave: suspend (name: String, source: Source) -> String?,
     onDone: () -> Unit,
 ) {
@@ -128,11 +131,13 @@ internal fun ProfileForm(
 
     fun save() {
         val cleanName = Profiles.cleanName(name.text.toString())
-        val source = Source.direct(address.text.toString())
+        val typed = address.text.toString()
+        val source = Source.parse(typed, serverBase)
         problem = when {
             busy -> return
             cleanName.isEmpty() -> "Give the profile a name."
-            source == null -> "The address must start with http:// or https:// and have no spaces."
+            source == null && Source.code(typed) != null -> "This app was built without a server address, so codes do not work. Type the full address."
+            source == null -> "Enter the code you were given, or an address that starts with http:// or https:// and has no spaces."
             else -> null
         }
         if (problem != null || source == null) return
@@ -155,7 +160,7 @@ internal fun ProfileForm(
             )
             GlassTextField(
                 state = address,
-                label = "Playlist address (M3U URL)",
+                label = "Playlist address or code",
                 modifier = Modifier.weight(2f),
                 focusRequester = startFocus.takeIf { existing == null },
                 keyboardType = KeyboardType.Uri,

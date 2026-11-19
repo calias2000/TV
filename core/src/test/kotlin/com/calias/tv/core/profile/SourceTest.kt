@@ -19,6 +19,21 @@ class SourceTest {
     }
 
     @Test
+    fun `a code becomes the playlist link of that code on the server`() {
+        val link = Source.Direct("http://pc:5002/api/iptv/p/AB23/list")
+        assertEquals(link, Source.parse("AB23", "http://pc:5002"))
+        assertEquals(link, Source.parse(" ab-2 3\n", "http://pc:5002/"), "case, spaces, dashes and a final slash do not matter")
+        assertEquals(Source.Direct("https://a.example/x.m3u"), Source.parse("https://a.example/x.m3u", "http://pc:5002"))
+    }
+
+    @Test
+    fun `what is neither an address nor a code is refused, and so is a code without a server`() {
+        listOf("", "AB2", "AB234", "AB01", "ABIO", "a.example/list", "AB 2").forEach { assertNull(Source.parse(it, "http://pc:5002"), "'$it'") }
+        assertNull(Source.parse("AB23", ""))
+        assertNull(Source.parse("  ", "http://pc:5002"))
+    }
+
+    @Test
     fun `a source survives encode and decode, and unreadable text gives null`() {
         val source = Source.Direct("https://a.example/get.php?username=u&password=p")
         assertEquals(source, Source.decode(Source.encode(source)))
