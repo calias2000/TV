@@ -25,11 +25,11 @@ sealed interface Source {
             else -> null
         }
 
-        // The characters of an access code: letters and digits without I, O, 0 and 1 (easy to mix up). As on the server.
-        private val CODE = Regex("[A-HJ-NP-Z2-9]{4}")
+        // An access code is six digits, as on the server.
+        private val CODE = Regex("[0-9]{6}")
 
-        /** The access code in [typed] (capitals, spaces and dashes ignored), or null if it is not one. */
-        fun code(typed: String): String? = typed.filterNot { it.isWhitespace() || it == '-' }.uppercase().takeIf { CODE.matches(it) }
+        /** The access code in [typed] (spaces and dashes ignored), or null if it is not one. */
+        fun code(typed: String): String? = typed.filterNot { it.isWhitespace() || it == '-' }.takeIf { CODE.matches(it) }
 
         private fun codeLink(serverBase: String, code: String) = "${serverBase.trimEnd('/')}/api/iptv/p/$code/list"
 

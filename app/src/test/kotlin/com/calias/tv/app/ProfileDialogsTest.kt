@@ -106,17 +106,17 @@ class ProfileDialogsTest {
     @Test
     fun `a code is saved as the playlist link of that code on the server`() {
         form(existing = null)
-        fields()[1].performTextInput(" ab-23 ")
+        fields()[1].performTextInput(" 123-456 ")
         compose.onNodeWithText("Save").focusAndPressOk(compose)
         compose.waitForIdle()
 
-        assertEquals("Profile 1" to Source.Direct("http://pc:5002/api/iptv/p/AB23/list"), saved)
+        assertEquals("Profile 1" to Source.Direct("http://pc:5002/api/iptv/p/123456/list"), saved)
     }
 
     @Test
     fun `a code in a build without a server address is explained`() {
         form(existing = null, serverBase = "")
-        fields()[1].performTextInput("AB23")
+        fields()[1].performTextInput("123456")
         compose.onNodeWithText("Save").focusAndPressOk(compose)
 
         compose.onNodeWithText("This app was built without a server address, so codes do not work. Type the full address.").assertIsDisplayed()
