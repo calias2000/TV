@@ -25,6 +25,9 @@ import com.calias.tv.app.ui.GlassPanel
 import com.calias.tv.app.ui.LocalBackdrop
 import com.calias.tv.app.ui.Space
 import com.calias.tv.app.ui.Spinner
+import com.calias.tv.app.update.UpdateState
+import com.calias.tv.app.update.updateButton
+import com.calias.tv.app.update.updateText
 import com.calias.tv.core.profile.Profile
 import com.calias.tv.app.ui.fadeEdges
 
@@ -40,6 +43,8 @@ fun SettingsScreen(
     onEditProfile: () -> Unit,
     font: AppFont,
     onFont: (AppFont) -> Unit,
+    update: UpdateState = UpdateState.Idle,
+    onUpdate: () -> Unit = {},
 ) {
     // No glow here: the screens before it leave theirs on.
     val backdrop = LocalBackdrop.current
@@ -57,6 +62,10 @@ fun SettingsScreen(
                     GlassButton(text = "Sync now", onClick = onSync)
                     GlassButton(text = "Edit profile", onClick = onEditProfile)
                 }
+            }
+            SettingsSection("App version ${BuildConfig.VERSION_NAME}") {
+                updateText(update)?.let { Text(text = it) }
+                updateButton(update)?.let { GlassButton(text = it, onClick = onUpdate) }
             }
             SettingsSection("Font") {
                 Choices(AppFont.entries, font, AppFont::label, onFont) {

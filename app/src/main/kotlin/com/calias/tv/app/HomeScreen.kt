@@ -36,6 +36,9 @@ import androidx.tv.material3.Text
 import com.calias.tv.app.ui.Corner
 import com.calias.tv.app.ui.Edge
 import com.calias.tv.app.ui.Glass
+import com.calias.tv.app.ui.GlassButton
+import com.calias.tv.app.update.UpdateState
+import com.calias.tv.app.update.homeUpdateButton
 import com.calias.tv.app.ui.GlassIconButton
 import com.calias.tv.app.ui.GlassPanel
 import com.calias.tv.app.ui.GlassSurface
@@ -75,6 +78,8 @@ fun HomeScreen(
     onProfiles: () -> Unit,
     onSync: () -> Unit,
     onToggleTheme: () -> Unit,
+    update: UpdateState = UpdateState.Idle,
+    onUpdate: () -> Unit = {},
 ) {
     val ready = state is PlaylistState.Loaded
     val nowMs = rememberNowMs()
@@ -111,6 +116,7 @@ fun HomeScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Clock(nowMs, modifier = Modifier.weight(1f))
+                homeUpdateButton(update)?.let { GlassButton(text = it, onClick = onUpdate) }
                 GlassIconButton(R.drawable.ic_profile, "Profiles", onProfiles)
                 GlassIconButton(R.drawable.ic_sync, "Sync", onSync)
                 GlassIconButton(R.drawable.ic_settings, "Settings", { onOpen(Settings) })

@@ -3,6 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- The app updates itself from GitHub Releases (see update/UpdateViewModel). Installing needs this one, which the user allows per app
+         ("Install unknown apps"); the second lets Android 12+ skip its confirmation when an app updates itself, where the system allows it. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
 
     <!-- Declares this is a TV app. Without it the app is not offered on Android TV. -->
     <uses-feature android:name="android.software.leanback" android:required="true" />
