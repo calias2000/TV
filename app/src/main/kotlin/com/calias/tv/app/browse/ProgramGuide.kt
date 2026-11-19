@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -22,9 +21,11 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.calias.tv.app.formatTime
+import com.calias.tv.app.ui.Corner
 import com.calias.tv.app.ui.Glass
 import com.calias.tv.app.ui.ProgressBar
 import com.calias.tv.app.ui.GlassSurface
+import com.calias.tv.app.ui.Space
 import com.calias.tv.app.ui.fadeEdges
 import com.calias.tv.core.epg.Program
 
@@ -39,29 +40,29 @@ import com.calias.tv.core.epg.Program
 fun ProgramGuide(name: String, schedule: List<Program>, nowMs: Long, entry: FocusRequester) {
     val colors = Glass.overVideo
     var lastFocused by remember { mutableIntStateOf(0) }
-    Column(modifier = Modifier.padding(horizontal = 12.dp).padding(top = 16.dp)) {
+    Column(modifier = Modifier.padding(horizontal = Space.Inset).padding(top = Space.Gap)) {
         Text(
             text = name,
             style = MaterialTheme.typography.titleMedium,
             color = colors.text,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 4.dp),
+            modifier = Modifier.padding(start = Space.Inset, end = Space.Inset, bottom = 4.dp),
         )
         if (schedule.isEmpty()) {
             Text(
                 text = "No guide data",
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textMuted,
-                modifier = Modifier.padding(horizontal = 12.dp),
+                modifier = Modifier.padding(horizontal = Space.Inset),
             )
             return@Column
         }
         val entryRow = lastFocused.coerceAtMost(schedule.lastIndex)
         LazyColumn(
             modifier = Modifier.fadeEdges(),
-            contentPadding = PaddingValues(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            contentPadding = PaddingValues(vertical = Space.Gap),
+            verticalArrangement = Arrangement.spacedBy(Space.Row),
         ) {
             itemsIndexed(schedule) { index, program ->
                 val running = program.startMs <= nowMs
@@ -71,7 +72,7 @@ fun ProgramGuide(name: String, schedule: List<Program>, nowMs: Long, entry: Focu
                         .fillMaxWidth()
                         .onFocusChanged { if (it.hasFocus) lastFocused = index }
                         .then(if (index == entryRow) Modifier.focusRequester(entry) else Modifier),
-                    shape = RoundedCornerShape(10.dp),
+                    shape = Corner.Medium,
                     colors = colors,
                 ) {
                     Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {

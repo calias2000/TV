@@ -37,6 +37,8 @@ class ControlsStateTest {
     fun `OK opens the card, BACK-style close keeps the button, hide clears everything`() {
         val controls = ControlsState().apply { onBarKey(Key.DirectionDown) }
         assertTrue(controls.onBarKey(Key.DirectionCenter))
+        assertFalse(controls.menuOpen) // opens when OK is let go, not when it goes down
+        assertTrue(controls.onBarKeyUp(Key.DirectionCenter))
         assertTrue(controls.menuOpen)
 
         controls.closeMenu()
@@ -44,10 +46,25 @@ class ControlsStateTest {
         assertEquals(TrackMenu.AUDIO, controls.button)
 
         controls.onBarKey(Key.DirectionCenter)
+        controls.onBarKeyUp(Key.DirectionCenter)
         controls.hide()
         assertFalse(controls.shown)
         assertFalse(controls.menuOpen)
         assertNull(controls.button)
+    }
+
+    @Test
+    fun `a release opens the card only for OK, with a button highlighted and the card closed`() {
+        val controls = ControlsState()
+        assertFalse(controls.onBarKeyUp(Key.DirectionCenter)) // no button highlighted
+
+        controls.onBarKey(Key.DirectionDown)
+        assertFalse(controls.onBarKeyUp(Key.DirectionLeft))
+        assertFalse(controls.menuOpen)
+
+        assertTrue(controls.onBarKeyUp(Key.Enter))
+        assertTrue(controls.menuOpen)
+        assertFalse(controls.onBarKeyUp(Key.DirectionCenter)) // already open: the release belongs to the card's row
     }
 
     @Test

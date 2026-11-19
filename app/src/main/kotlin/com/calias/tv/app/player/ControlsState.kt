@@ -33,7 +33,9 @@ data class SkipFlash(val totalMs: Long, val id: Int) {
  * or while an Audio/Subtitles button is highlighted, they stay. The skip flash shows for [SKIP_FLASH].
  *
  * The bar's two buttons ([TrackMenu]) are not focusable: DOWN highlights the first, LEFT/RIGHT
- * switch, OK opens its card ([menuOpen]), UP leaves ([onBarKey]). A plain state holder.
+ * switch, UP leaves ([onBarKey]), and OK opens its card ([menuOpen]) when it is let go ([onBarKeyUp]), like
+ * every button in the app, which clicks on release. Opening it on the press would put the card's first row
+ * under the finger: its release would pick that row and close the card at once. A plain state holder.
  */
 @Stable
 class ControlsState {
@@ -67,6 +69,14 @@ class ControlsState {
         show()
     }
 
+    /** The release of OK: opens the card of the highlighted button. True if it was used. */
+    fun onBarKeyUp(key: Key): Boolean {
+        if (key != Key.DirectionCenter && key != Key.Enter) return false
+        if (button == null || menuOpen) return false
+        menuOpen = true
+        return true
+    }
+
     /** The keys that work while the bar shows and its card is closed. True if the key was used. */
     fun onBarKey(key: Key): Boolean {
         val current = button
@@ -85,7 +95,7 @@ class ControlsState {
             }
             Key.DirectionUp -> { button = null; show(); true }
             Key.DirectionDown -> true
-            Key.DirectionCenter, Key.Enter -> { menuOpen = true; true }
+            Key.DirectionCenter, Key.Enter -> true // acts on release: [onBarKeyUp]
             else -> false
         }
     }

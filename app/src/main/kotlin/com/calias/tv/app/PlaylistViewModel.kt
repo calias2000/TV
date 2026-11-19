@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.playlist.Playlist
+import com.calias.tv.core.profile.Source
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,7 +31,7 @@ internal fun statusText(state: PlaylistState): String? = when (state) {
 }
 
 /**
- * Fetches the playlist from its source. There is no local cache: the source is the truth, and a
+ * Fetches the playlist from the [Source] it is told to [use]. There is no local cache: the source is the truth, and a
  * failed fetch is reported as [PlaylistState.Failed] rather than hidden behind old data.
  *
  * The TV guide loads in the background after the playlist, so a sync always refreshes it too. It is
@@ -41,6 +42,11 @@ internal fun statusText(state: PlaylistState): String? = when (state) {
  */
 class PlaylistViewModel : ViewModel() {
 
+    private val _source = MutableStateFlow<Source?>(null)
+
+    /** The source the state below belongs to. Null until the first [use]. */
+    val source: StateFlow<Source?> = _source.asStateFlow()
+
     private val _state = MutableStateFlow<PlaylistState>(PlaylistState.Loading)
     val state: StateFlow<PlaylistState> = _state.asStateFlow()
 
@@ -50,7 +56,10 @@ class PlaylistViewModel : ViewModel() {
     private var syncJob: Job? = null
     private var guideLoadedAt = 0L
 
-    init {
+    /** Switches to [source] and loads it. The same source again changes nothing: what is loaded stays. */
+    fun use(source: Source) {
+        if (source == _source.value) return
+        _source.value = source
         sync()
     }
 
@@ -69,13 +78,14 @@ class PlaylistViewModel : ViewModel() {
 
     /** Fetches the playlist and the guide again. Cancels a fetch that is still running. */
     fun sync() {
+        val source = _source.value ?: return
         syncJob?.cancel()
         _state.value = PlaylistState.Loading
         _guide.value = Guide.EMPTY
         guideLoadedAt = 0
         syncJob = viewModelScope.launch {
             val playlist = try {
-                PlaylistLoader.load()
+                PlaylistLoader.load(source)
             } catch (e: Exception) {
                 ensureActive() // a canceled sync is not a failed playlist
                 _state.value = PlaylistState.Failed(e.message ?: e.toString())

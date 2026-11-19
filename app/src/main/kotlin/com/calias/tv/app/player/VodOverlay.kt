@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,10 +25,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.calias.tv.app.ui.Corner
 import com.calias.tv.app.ui.Edge
 import com.calias.tv.app.ui.Glass
 import com.calias.tv.app.ui.GlassPanel
 import com.calias.tv.app.ui.ProgressBar
+import com.calias.tv.app.ui.Space
 import com.calias.tv.core.seek.Seek
 
 /**
@@ -89,10 +90,10 @@ fun VodOverlay(
  */
 @Composable
 private fun BarButton(text: String, highlighted: Boolean) {
-    val shape = RoundedCornerShape(50)
+    val shape = Corner.Medium
     Box(
         modifier = Modifier
-            .height(48.dp)
+            .height(Space.Control)
             .clip(shape)
             .background(if (highlighted) Glass.overVideo.fillFocused else Color.White.copy(alpha = 0.08f))
             .border(
@@ -102,7 +103,7 @@ private fun BarButton(text: String, highlighted: Boolean) {
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = text, color = Color.White, modifier = Modifier.padding(horizontal = 24.dp))
+        Text(text = text, color = Color.White, modifier = Modifier.padding(horizontal = Space.Inner))
     }
 }
 

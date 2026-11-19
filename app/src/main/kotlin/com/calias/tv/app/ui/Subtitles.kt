@@ -3,7 +3,6 @@ package com.calias.tv.app.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -13,7 +12,7 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 
-/** The subtitle sizes the user can pick in Settings, in sp. */
+/** The subtitle sizes the user can pick in the player's subtitles card, in sp. */
 enum class SubtitleSize(val label: String, val sp: Int) {
     SMALL("Small", 20),
     MEDIUM("Medium", 24),
@@ -26,8 +25,8 @@ enum class SubtitleSize(val label: String, val sp: Int) {
 }
 
 /**
- * One subtitle line on dark glass, in the app font at [size]. The player draws it over the video and
- * Settings previews it, so what you pick is what you get. White on dark: it sits on video in either theme.
+ * One subtitle line on dark glass, in the app font at [size]. The player draws it over the video and the
+ * subtitles card previews it, so what you pick is what you get. White on dark: it sits on video in either theme.
  */
 @Composable
 fun SubtitleLine(text: String, size: SubtitleSize, modifier: Modifier = Modifier) {
@@ -38,7 +37,7 @@ fun SubtitleLine(text: String, size: SubtitleSize, modifier: Modifier = Modifier
         textAlign = TextAlign.Center,
         modifier = modifier
             .widthIn(max = 800.dp)
-            .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+            .background(Color.Black.copy(alpha = 0.6f), Corner.Small)
             .padding(horizontal = 16.dp, vertical = 6.dp),
     )
 }

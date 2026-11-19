@@ -65,6 +65,48 @@ object Edge {
     val Margin = 32.dp
 }
 
+/** The spacing every panel, row, button and field shares, so they line up and look the same size everywhere. */
+object Space {
+    /** From a panel's edge to what is inside it. */
+    val Panel = 32.dp
+
+    /** Inside a button, field or row, from its edge to its content on the left and right. */
+    val Inner = 24.dp
+
+    /** Between neighbors: rows, fields, buttons. */
+    val Gap = 16.dp
+
+    /** From a side panel's edge to its title and rows. Corner.Large is Corner.Medium plus this, so the corners stay parallel. */
+    val Inset = 12.dp
+
+    /** Between the rows of a list: channels, episodes, profiles, programs. */
+    val Row = 8.dp
+
+    /** The height of a button or a text field. */
+    val Control = 48.dp
+
+    /** Room around a scrolling list for a focused row's edge, which the list would cut flat otherwise. */
+    val FocusEdge = 4.dp
+}
+
+/**
+ * The three corner radii of the app, so no two surfaces round differently by accident. A shape inside
+ * another keeps its corners parallel to the outer ones: its radius is the outer radius minus the gap
+ * between them (side panels: [Large] 24 around rows of [Medium] 12 inset by 12). Where the gap is
+ * wider than the radius, as in a modal, the inner shape just takes the scale. Nothing is fully round,
+ * except the icon buttons in Home's header (CircleShape in GlassIconButton) and progress bars.
+ */
+object Corner {
+    /** What sits inside a row or card: a logo chip, the subtitle box. */
+    val Small = RoundedCornerShape(8.dp)
+
+    /** What you press or read inside a panel: buttons, fields, list rows, cards. */
+    val Medium = RoundedCornerShape(12.dp)
+
+    /** Panels, modals and the big Home tiles. */
+    val Large = RoundedCornerShape(24.dp)
+}
+
 /** The backdrop color of each Home section. */
 object SectionTint {
     val Live = Color(0xFF2E7BFF)
@@ -74,12 +116,10 @@ object SectionTint {
 
 private val LocalGlass = staticCompositionLocalOf { DarkGlass }
 
-/** Access to the current glass tokens: `Glass.colors`, `Glass.shape`. */
+/** Access to the current glass tokens: `Glass.colors`. */
 object Glass {
     val colors: GlassColors
         @Composable @ReadOnlyComposable get() = LocalGlass.current
-
-    val shape = RoundedCornerShape(20.dp)
 
     /**
      * Rows drawn on the glass panels over the video: always light on dark, in either theme, with no

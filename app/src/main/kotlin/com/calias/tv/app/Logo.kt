@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.calias.tv.app.ui.Corner
 import com.calias.tv.core.Channel
 import com.calias.tv.core.ContentKind
 
@@ -28,7 +28,7 @@ import com.calias.tv.core.ContentKind
 fun ChannelLogo(channel: Channel, modifier: Modifier = Modifier) {
     val box = if (channel.kind == ContentKind.MOVIE) Modifier.size(44.dp, 66.dp) else Modifier.size(64.dp, 36.dp)
     val chip = channel.kind == ContentKind.LIVE && !channel.logo.isNullOrBlank()
-    val background = if (chip) Modifier.clip(RoundedCornerShape(6.dp)).background(Color.White.copy(alpha = 0.92f)) else Modifier
+    val background = if (chip) Modifier.clip(Corner.Small).background(Color.White.copy(alpha = 0.92f)) else Modifier
     Box(modifier = modifier.then(box).then(background), contentAlignment = Alignment.Center) {
         if (!channel.logo.isNullOrBlank()) {
             AsyncImage(
