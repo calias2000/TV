@@ -11,6 +11,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.calias.tv.app.player.PlayerScreen
+import com.calias.tv.app.update.UpdateViewModel
 import com.calias.tv.core.ContentKind
 import com.calias.tv.app.ui.Edge
 import com.calias.tv.core.epg.Guide
@@ -45,6 +46,7 @@ fun AppNav(
     onSync: () -> Unit,
     look: Look,
     prefs: PrefsViewModel,
+    update: UpdateViewModel,
 ) {
     val backStack = remember { mutableStateListOf<Any>(Home) }
     val open: (Any) -> Unit = { backStack.add(it) }
@@ -77,6 +79,8 @@ fun AppNav(
                     onProfiles = { onProfileDialog(ProfileDialog.Switch) },
                     onSync = onSync,
                     onToggleTheme = prefs::toggleDark,
+                    update = update.state.collectAsStateWithLifecycle().value,
+                    onUpdate = update::act,
                 )
             }
             entry<LiveTv> { key ->
@@ -121,6 +125,8 @@ fun AppNav(
                     onEditProfile = { onProfileDialog(ProfileDialog.Form(profile.id)) },
                     font = look.font,
                     onFont = prefs::setFont,
+                    update = update.state.collectAsStateWithLifecycle().value,
+                    onUpdate = update::act,
                 )
             }
             entry<Watch> { key ->

@@ -7,6 +7,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import com.calias.tv.app.ui.AppFont
 import com.calias.tv.app.ui.AppTheme
+import com.calias.tv.app.update.Release
+import com.calias.tv.app.update.UpdateState
 import com.calias.tv.core.Channel
 import com.calias.tv.core.playlist.Playlist
 import com.calias.tv.core.profile.Profile
@@ -39,9 +41,11 @@ class SettingsScreenTest {
         onEditProfile: () -> Unit = {},
         font: AppFont = AppFont.SYSTEM,
         onFont: (AppFont) -> Unit = {},
+        update: UpdateState = UpdateState.Idle,
+        onUpdate: () -> Unit = {},
     ) = compose.setContent {
         AppTheme(dark = true, font = AppFont.SYSTEM) {
-            SettingsScreen(profile, state, onSync, onEditProfile, font, onFont)
+            SettingsScreen(profile, state, onSync, onEditProfile, font, onFont, update, onUpdate)
         }
     }
 
@@ -74,6 +78,23 @@ class SettingsScreenTest {
         screen(onEditProfile = { edits++ })
         compose.onNodeWithText("Edit profile").focusAndPressOk(compose)
         assertEquals(1, edits)
+    }
+
+    @Test
+    fun `the app version is shown, with a button to look for an update`() {
+        var asked = 0
+        screen(onUpdate = { asked++ })
+        compose.onNodeWithText("App version ${BuildConfig.VERSION_NAME}").assertIsDisplayed()
+        compose.onNodeWithText("Check for updates").focusAndPressOk(compose)
+        assertEquals(1, asked)
+    }
+
+    @Test
+    fun `a found update is offered, and while it downloads there is nothing to press`() {
+        val release = Release("0.2.0", "http://x/app.apk", 10, null)
+        screen(update = UpdateState.Available(release))
+        compose.onNodeWithText("Version 0.2.0 is available.").assertIsDisplayed()
+        compose.onNodeWithText("Install version 0.2.0").assertIsDisplayed()
     }
 
     @Test

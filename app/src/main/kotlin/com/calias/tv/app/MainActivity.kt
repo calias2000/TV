@@ -17,6 +17,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.calias.tv.app.ui.AppBackground
 import com.calias.tv.app.ui.AppTheme
+import com.calias.tv.app.update.UpdateViewModel
 import com.calias.tv.core.profile.Profile
 
 /** The single activity. It shows the app for the active profile, or the way to get one; screens and navigation live in AppNav. */
@@ -26,6 +27,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val prefs: PrefsViewModel = viewModel()
             val profiles: ProfilesViewModel = viewModel()
+            val update: UpdateViewModel = viewModel()
             // The look of the active profile, and the profiles themselves, are remembered between runs. Nothing is drawn until they are read.
             val look = prefs.look.collectAsStateWithLifecycle().value ?: return@setContent
             val profilesState = profiles.state.collectAsStateWithLifecycle().value ?: return@setContent
@@ -34,7 +36,7 @@ class MainActivity : ComponentActivity() {
             AppTheme(dark = look.dark, font = look.font) {
                 AppBackground {
                     if (active != null) {
-                        ProfileContent(active, look, prefs, onProfileDialog = { dialog = it })
+                        ProfileContent(active, look, prefs, update, onProfileDialog = { dialog = it })
                     } else {
                         val hasProfiles = profilesState.profiles.isNotEmpty()
                         NoProfileScreen(hasProfiles, onOpen = { dialog = if (hasProfiles) ProfileDialog.Switch else ProfileDialog.Form(null) })
@@ -48,7 +50,7 @@ class MainActivity : ComponentActivity() {
 
 /** The app for one active profile. A different profile starts it over, on Home. */
 @Composable
-private fun ProfileContent(profile: Profile, look: Look, prefs: PrefsViewModel, onProfileDialog: (ProfileDialog) -> Unit) {
+private fun ProfileContent(profile: Profile, look: Look, prefs: PrefsViewModel, update: UpdateViewModel, onProfileDialog: (ProfileDialog) -> Unit) {
     val viewModel: PlaylistViewModel = viewModel()
     LaunchedEffect(profile.source) { viewModel.use(profile.source) }
     // While the app is in front, keep the guide up to date (it also runs again on every return).
@@ -68,6 +70,7 @@ private fun ProfileContent(profile: Profile, look: Look, prefs: PrefsViewModel, 
                 onSync = viewModel::sync,
                 look = look,
                 prefs = prefs,
+                update = update,
             )
         }
     }

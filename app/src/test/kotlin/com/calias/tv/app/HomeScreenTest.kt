@@ -7,9 +7,12 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import com.calias.tv.app.ui.AppFont
 import com.calias.tv.app.ui.AppTheme
+import com.calias.tv.app.update.Release
+import com.calias.tv.app.update.UpdateState
 import com.calias.tv.core.Channel
 import com.calias.tv.core.epg.Guide
 import com.calias.tv.core.epg.Program
@@ -37,7 +40,15 @@ class HomeScreenTest {
     private var opened: Any? = null
     private var profilesOpened = 0
 
-    private fun home(state: PlaylistState, counts: Counts?, recentLive: List<Channel> = listOf(recent), guide: Guide = Guide.EMPTY) = compose.setContent {
+    private var updates = 0
+
+    private fun home(
+        state: PlaylistState,
+        counts: Counts?,
+        recentLive: List<Channel> = listOf(recent),
+        guide: Guide = Guide.EMPTY,
+        update: UpdateState = UpdateState.Idle,
+    ) = compose.setContent {
         AppTheme(dark = true, font = AppFont.SYSTEM) {
             HomeScreen(
                 state = state,
@@ -51,6 +62,8 @@ class HomeScreenTest {
                 onProfiles = { profilesOpened++ },
                 onSync = {},
                 onToggleTheme = {},
+                update = update,
+                onUpdate = { updates++ },
             )
         }
     }
@@ -84,6 +97,19 @@ class HomeScreenTest {
         assertEquals(height("Channel One"), height(onNow.name))
         // As tall as a logo and two lines need, not a poster-sized box: the content stays centered in it.
         assertTrue(height("Channel One") < with(compose.density) { 80.dp.roundToPx() })
+    }
+
+    @Test
+    fun `an update that was found has a button on Home, and OK on it asks for the update`() {
+        home(loaded, Counts(1, 0, 0), update = UpdateState.Available(Release("0.2.0", "http://x/app.apk", 10, null)))
+        compose.onNodeWithText("Update to 0.2.0").focusAndPressOk(compose)
+        assertEquals(1, updates)
+    }
+
+    @Test
+    fun `with no update there is no update button`() {
+        home(loaded, Counts(1, 0, 0), update = UpdateState.UpToDate)
+        assertTrue(compose.onAllNodesWithText("Update", substring = true).fetchSemanticsNodes().isEmpty())
     }
 
     @Test

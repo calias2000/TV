@@ -37,6 +37,11 @@ class HttpGetTest {
             exchange.sendResponseHeaders(500, -1)
             exchange.close()
         }
+        server.createContext("/echo") { exchange ->
+            val body = (exchange.requestHeaders.getFirst("X-Test") ?: "none").toByteArray()
+            exchange.sendResponseHeaders(200, body.size.toLong())
+            exchange.responseBody.use { it.write(body) }
+        }
         server.createContext("/slow") { exchange ->
             Thread.sleep(3_000) // longer than the time the test allows
             exchange.sendResponseHeaders(200, -1)
@@ -52,6 +57,12 @@ class HttpGetTest {
     fun `hands the body to the reader`() = runBlocking {
         val text = httpGet(url("/ok"), "Test", 5.seconds) { it.bufferedReader().readText() }
         assertEquals("hello", text)
+    }
+
+    @Test
+    fun `the headers are sent with the request`() = runBlocking {
+        val text = httpGet(url("/echo"), "Test", 5.seconds, headers = mapOf("X-Test" to "yes")) { it.bufferedReader().readText() }
+        assertEquals("yes", text)
     }
 
     @Test
