@@ -14,6 +14,10 @@ val backendBase: String = providers.gradleProperty("backendBase").orNull
         ?.inputStream()?.use { Properties().apply { load(it) }.getProperty("backend.base") }
     ?: ""
 
+// The one place the version is set. The build number is derived from it (0.2.1 -> 201), so it always rises with it,
+// and a push to main that raises it is published as a GitHub release (see .github/workflows/ci-cd.yml).
+val appVersion = "0.1.0"
+
 // A release without it would ship an app where codes do not work: stop the build instead.
 gradle.taskGraph.whenReady {
     if (hasTask(":app:assembleRelease") && backendBase.isBlank()) {
@@ -29,8 +33,8 @@ android {
         applicationId = "com.calias.tv"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = appVersion.split(".").let { (major, minor, patch) -> major.toInt() * 10_000 + minor.toInt() * 100 + patch.toInt() }
+        versionName = appVersion
         buildConfigField("String", "BACKEND_BASE", "\"$backendBase\"")
     }
 
