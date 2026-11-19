@@ -6,10 +6,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageInstaller
-import android.net.Uri
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.calias.tv.app.BuildConfig
@@ -75,7 +75,7 @@ class UpdateViewModel(app: Application) : AndroidViewModel(app) {
         if (busy()) return
         val context = getApplication<Application>()
         if (!context.packageManager.canRequestPackageInstalls()) {
-            val settings = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}"))
+            val settings = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, "package:${context.packageName}".toUri())
             context.startActivity(settings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             _state.value = UpdateState.Failed("Allow installs from this app in the screen that opened, then try again.", release)
             return

@@ -1,6 +1,7 @@
 package com.calias.tv.app
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -78,6 +79,18 @@ class SettingsScreenTest {
         screen(onEditProfile = { edits++ })
         compose.onNodeWithText("Edit profile").focusAndPressOk(compose)
         assertEquals(1, edits)
+    }
+
+    @Test
+    fun `the profile and the app version share a row, and the font has its own line below`() {
+        screen()
+        val profileBox = compose.onNodeWithText("Profile: Mum").getBoundsInRoot()
+        val versionBox = compose.onNodeWithText("App version ${BuildConfig.VERSION_NAME}").getBoundsInRoot()
+        val fontBox = compose.onNodeWithText("Font").getBoundsInRoot()
+
+        assertEquals(profileBox.top, versionBox.top)
+        assertTrue(profileBox.left < versionBox.left)
+        assertTrue(fontBox.top > profileBox.top)
     }
 
     @Test

@@ -108,7 +108,8 @@ internal fun options(tracks: Tracks, type: Int): List<TrackOption> {
         (0 until group.length).map { index ->
             val format = group.getTrackFormat(index)
             val language = language(format)
-            val count = seen.merge(language, 1, Int::plus)!!
+            val count = (seen[language] ?: 0) + 1
+            seen[language] = count
             val label = (if (count == 1) language else "$language $count") + surround(format, type)
             TrackOption(group, index, label, format.language?.takeIf { it != C.LANGUAGE_UNDETERMINED }, group.isTrackSupported(index), group.isTrackSelected(index))
         }

@@ -3,9 +3,12 @@ package com.calias.tv.app
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -32,8 +35,9 @@ import com.calias.tv.core.profile.Profile
 import com.calias.tv.app.ui.fadeEdges
 
 /**
- * Settings: glass sections for the profile (source, status, sync, edit) and the font. The sections scroll
- * when they do not fit the screen. The subtitle size is set where it is used, in the player's subtitles card.
+ * Settings: glass sections for the profile (status, sync, edit), the app version (update) and the font. The
+ * profile and the version sit side by side, as tall as each other; the font has a row of buttons too wide
+ * for half the screen, so it has its own line. The sections scroll when they do not fit the screen.
  */
 @Composable
 fun SettingsScreen(
@@ -54,20 +58,22 @@ fun SettingsScreen(
         // Padding inside the scroll, so the focus rings at the ends are not faded.
         Column(
             modifier = Modifier.fillMaxSize().fadeEdges().verticalScroll(rememberScrollState()).padding(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+            verticalArrangement = Arrangement.spacedBy(SECTION_GAP),
         ) {
-            SettingsSection("Profile: ${profile.name}") {
-                statusText(state)?.let { Text(text = it) } ?: Spinner(diameter = 24.dp)
-                Row(horizontalArrangement = Arrangement.spacedBy(Space.Gap)) {
-                    GlassButton(text = "Sync now", onClick = onSync)
-                    GlassButton(text = "Edit profile", onClick = onEditProfile)
+            Row(modifier = Modifier.height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(SECTION_GAP)) {
+                SettingsSection("Profile: ${profile.name}", Modifier.weight(1f).fillMaxHeight()) {
+                    statusText(state)?.let { Text(text = it) } ?: Spinner(diameter = 24.dp)
+                    Row(horizontalArrangement = Arrangement.spacedBy(Space.Gap)) {
+                        GlassButton(text = "Sync now", onClick = onSync)
+                        GlassButton(text = "Edit profile", onClick = onEditProfile)
+                    }
+                }
+                SettingsSection("App version ${BuildConfig.VERSION_NAME}", Modifier.weight(1f).fillMaxHeight()) {
+                    updateText(update)?.let { Text(text = it) }
+                    updateButton(update)?.let { GlassButton(text = it, onClick = onUpdate) }
                 }
             }
-            SettingsSection("App version ${BuildConfig.VERSION_NAME}") {
-                updateText(update)?.let { Text(text = it) }
-                updateButton(update)?.let { GlassButton(text = it, onClick = onUpdate) }
-            }
-            SettingsSection("Font") {
+            SettingsSection("Font", Modifier.fillMaxWidth()) {
                 Choices(AppFont.entries, font, AppFont::label, onFont) {
                     MaterialTheme.typography.bodyLarge.copy(fontFamily = it.family)
                 }
@@ -96,10 +102,12 @@ private fun <T> Choices(
     }
 }
 
-/** A titled glass section of Settings. */
+private val SECTION_GAP = 24.dp
+
+/** A titled glass section of Settings. [modifier] says how much room it takes. */
 @Composable
-private fun SettingsSection(title: String, content: @Composable ColumnScope.() -> Unit) {
-    GlassPanel(modifier = Modifier.fillMaxWidth(), fill = Glass.colors.fill, edge = Glass.colors.edge) {
+private fun SettingsSection(title: String, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    GlassPanel(modifier = modifier, fill = Glass.colors.fill, edge = Glass.colors.edge) {
         Column(modifier = Modifier.padding(Space.Panel), verticalArrangement = Arrangement.spacedBy(Space.Gap)) {
             Text(text = title, style = MaterialTheme.typography.titleMedium)
             content()
