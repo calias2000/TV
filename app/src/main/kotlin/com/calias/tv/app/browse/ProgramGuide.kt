@@ -1,8 +1,10 @@
 package com.calias.tv.app.browse
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -30,14 +33,14 @@ import com.calias.tv.app.ui.fadeEdges
 import com.calias.tv.core.epg.Program
 
 /**
- * What the guide says about one channel: its name, then the rest of its day as a scrolling list. The
+ * What the guide says about one channel: its name, its picture [quality] (null when not known), then the rest of its day as a scrolling list. The
  * running program comes first, with its progress. [schedule] comes from `Guide.schedule`. Focus can enter
  * the list to scroll through the day: [entry] is always on the row that had focus last, so it also works
  * after scrolling. Use a new instance per channel (`key`), so each channel starts at the top. Light on
  * dark, it sits on a panel over the video.
  */
 @Composable
-fun ProgramGuide(name: String, schedule: List<Program>, nowMs: Long, entry: FocusRequester) {
+fun ProgramGuide(name: String, quality: String?, schedule: List<Program>, nowMs: Long, entry: FocusRequester) {
     val colors = Glass.overVideo
     var lastFocused by remember { mutableIntStateOf(0) }
     Column(modifier = Modifier.padding(horizontal = Space.Inset).padding(top = Space.Gap)) {
@@ -49,13 +52,18 @@ fun ProgramGuide(name: String, schedule: List<Program>, nowMs: Long, entry: Focu
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = Space.Inset, end = Space.Inset, bottom = 4.dp),
         )
-        if (schedule.isEmpty()) {
+        quality?.let {
             Text(
-                text = "No guide data",
+                text = it,
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textMuted,
                 modifier = Modifier.padding(horizontal = Space.Inset),
             )
+        }
+        if (schedule.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = "No guide data", style = MaterialTheme.typography.bodySmall, color = colors.textMuted)
+            }
             return@Column
         }
         val entryRow = lastFocused.coerceAtMost(schedule.lastIndex)

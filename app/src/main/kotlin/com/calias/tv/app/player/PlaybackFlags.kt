@@ -8,10 +8,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
+import com.calias.tv.core.video.Quality
 
 /**
  * Playback facts the screen needs, as Compose state: is the player waiting for data ([buffering]),
- * did the user pause ([paused]), did the stream play to its end ([ended]). Media3 1.11.1's Compose module has no holder
+ * did the user pause ([paused]), did the stream play to its end ([ended]), what the picture really is ([quality], null until known). Media3 1.11.1's Compose module has no holder
  * for these (a general PlaybackState arrives in 1.12), so this uses the stable Player.Listener.
  * Replace with Media3's holder when we move to 1.12.
  */
@@ -22,6 +24,8 @@ class PlaybackFlags {
     var paused by mutableStateOf(false)
         internal set
     var ended by mutableStateOf(false)
+        internal set
+    var quality by mutableStateOf<String?>(null)
         internal set
 }
 
@@ -37,6 +41,11 @@ fun rememberPlaybackFlags(player: Player): PlaybackFlags {
 
             override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
                 flags.paused = !playWhenReady
+            }
+
+            // Back to 0 by 0 whenever a new stream is loaded, so the next size always counts as a change.
+            override fun onVideoSizeChanged(videoSize: VideoSize) {
+                flags.quality = Quality.label(videoSize.width, videoSize.height)
             }
         }
         player.addListener(listener)

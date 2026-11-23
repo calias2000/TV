@@ -16,7 +16,7 @@ val backendBase: String = providers.gradleProperty("backendBase").orNull
 
 // The one place the version is set. The build number is derived from it (0.2.1 -> 201), so it always rises with it,
 // and a push to main that raises it is published as a GitHub release (see .github/workflows/ci-cd.yml).
-val appVersion = "0.2.1"
+val appVersion = "0.3.0"
 
 // A release without it would ship an app where codes do not work: stop the build instead.
 gradle.taskGraph.whenReady {

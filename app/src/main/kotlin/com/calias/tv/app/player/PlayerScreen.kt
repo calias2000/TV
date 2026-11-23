@@ -313,6 +313,7 @@ fun PlayerScreen(
             guide = guide,
             nowMs = nowMs,
             showGuide = isLive,
+            qualityOf = { shown -> flags.quality.takeIf { started && shown.id == channel.id } },
             onPick = { group, index ->
                 if (isLive && started && group == zap.group && index == zap.loaded) {
                     panel.close() // OK on what plays: a clean picture

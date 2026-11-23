@@ -61,6 +61,7 @@ private val GUIDE_DELAY = 150.milliseconds
  * returns to the channels. BACK in the guide card goes back to the channels (LEFT does the same); elsewhere
  * the caller's BACK closes the panel.
  * Moving only browses, nothing starts: the guide follows the cursor, the picture stays on [playingIndex].
+ * [qualityOf] gives the picture size shown under a channel's name in the guide (null when not known).
  * Fixed light-on-dark colors: it sits on video, in either theme.
  */
 @Composable
@@ -73,6 +74,7 @@ fun ChannelPanel(
     guide: Guide,
     nowMs: Long,
     showGuide: Boolean,
+    qualityOf: (Channel) -> String?,
     onPick: (group: Int, index: Int) -> Unit,
 ) {
     AnimatedVisibility(
@@ -169,7 +171,7 @@ fun ChannelPanel(
             }
             if (showGuide) {
                 GlassPanel(modifier = Modifier.width(300.dp).fillMaxHeight().onFocusChanged { guideFocused = it.hasFocus }) {
-                    composeKey(shown.id) { ProgramGuide(shown.name, schedule, nowMs, guideEntry) } // each channel starts at the top
+                    composeKey(shown.id) { ProgramGuide(shown.name, qualityOf(shown), schedule, nowMs, guideEntry) } // each channel starts at the top
                 }
             }
         }

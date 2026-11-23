@@ -50,7 +50,7 @@ class ChannelPanelTest {
     private val state = PanelState(startOpen = true, group = 0)
     private var picked: Pair<Int, Int>? = null
 
-    private fun panel(playingIndex: Int = 0) {
+    private fun panel(playingIndex: Int = 0, qualityOf: (Channel) -> String? = { null }) {
         compose.mainClock.autoAdvance = false
         compose.setContent {
             AppTheme(dark = true, font = AppFont.SYSTEM) {
@@ -63,6 +63,7 @@ class ChannelPanelTest {
                     guide = guide,
                     nowMs = now,
                     showGuide = true,
+                    qualityOf = qualityOf,
                     onPick = { group, index -> picked = group to index },
                 )
             }
@@ -125,6 +126,12 @@ class ChannelPanelTest {
         // Focus is still on the channel list: OK picks the channel under the cursor.
         press(Key.DirectionCenter)
         assertEquals(0 to 1, picked)
+    }
+
+    @Test
+    fun `the guide card names the picture size under the channel name`() {
+        panel(qualityOf = { if (it.name == "a") "Full HD" else null })
+        compose.onNodeWithText("Full HD").assertIsDisplayed()
     }
 
     @Test
